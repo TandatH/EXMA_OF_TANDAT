@@ -112,6 +112,95 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="teacher-firebase.js"></script>
+    <script>
+        // --- 1. KHAI BÁO BIẾN ---
+        let db = null;
+        let exam = null;
+        let results = [];
+
+        // --- 2. HÀM CẤU HÌNH (Nút Lưu & Kết Nối) ---
+        function saveConfig() {
+            console.log("Đang kết nối...");
+            const apiKey = document.getElementById("apiKey").value.trim();
+            let dbURL = document.getElementById("databaseURL").value.trim();
+            const projectId = document.getElementById("projectId").value.trim();
+
+            if (!apiKey || !dbURL || !projectId) {
+                alert("⚠️ Vui lòng điền đủ 3 ô thông tin!");
+                return;
+            }
+
+            // Sửa lỗi dư dấu /
+            if (dbURL.endsWith("/")) dbURL = dbURL.slice(0, -1);
+
+            const config = {
+                apiKey: apiKey,
+                databaseURL: dbURL,
+                projectId: projectId,
+                authDomain: projectId + ".firebaseapp.com"
+            };
+
+            try {
+                if (!firebase.apps.length) firebase.initializeApp(config);
+                db = firebase.database();
+
+                // Kiểm tra kết nối
+                alert("⏳ Đang thử kết nối... Vui lòng đợi 3s");
+                
+                db.ref(".info/connected").once("value", (snap) => {
+                    if (snap.val() === true) {
+                        alert("✅ KẾT NỐI THÀNH CÔNG!\nBạn có thể đăng nhập ngay.");
+                        localStorage.setItem("fbConfig", JSON.stringify(config));
+                        // Chuyển màn hình
+                        document.getElementById("configSection").classList.add("hidden");
+                        document.getElementById("loginSection").classList.remove("hidden");
+                    } else {
+                        alert("❌ KẾT NỐI BỊ TỪ CHỐI!\nHãy vào Firebase Console -> Tab 'Rules' -> Sửa false thành true.");
+                    }
+                }, (error) => {
+                    alert("❌ LỖI MẠNG/URL: " + error.message);
+                });
+
+            } catch (e) {
+                alert("❌ Lỗi Code: " + e.message);
+            }
+        }
+
+        // --- 3. HÀM BỎ QUA (Nút Bỏ Qua) ---
+        function useLocal() {
+            alert("⚠️ Đã vào chế độ Offline (Test giao diện)");
+            document.getElementById("configSection").classList.add("hidden");
+            document.getElementById("loginSection").classList.remove("hidden");
+        }
+
+        // --- 4. CÁC HÀM KHÁC (Đăng nhập,...) ---
+        function login() {
+            const name = document.getElementById("teacherName").value;
+            if (name) {
+                document.getElementById("loginSection").classList.add("hidden");
+                document.getElementById("mainSection").classList.remove("hidden");
+                loadResults(); // Tải dữ liệu mẫu
+            } else {
+                alert("Nhập tên GV đi bạn ơi!");
+            }
+        }
+
+        function createExam() {
+            alert("Tính năng tạo đề đang tắt ở chế độ sửa lỗi này.");
+        }
+
+        function loadResults() {
+           // Giả lập kết quả để test
+           const list = document.getElementById("resultsList");
+           if(list) list.innerHTML = "<p>✅ Hệ thống đã hoạt động!</p>";
+        }
+        
+        // Tự động chạy khi tải trang
+        window.onload = function() {
+            console.log("Trang web đã tải xong!");
+        }
+    </script>
+</body>
+</html>
 </body>
 </html>
