@@ -13,12 +13,6 @@ Hệ thống thi trực tuyến hỗ trợ **NHIỀU MÁY THI CÙNG LÚC** với
 - ✅ Tính điểm tự động (thang 10)
 - ✅ Xem kết quả chi tiết
 
-## 🚀 Demo
-
-**Link:** https://tandath.github.io/KIEM_TRA_THI_EXAM/
-
-- Giáo viên: [teacher-firebase.html](https://tandath.github.io/KIEM_TRA_THI_EXAM/teacher-firebase.html)
-- Học sinh: [student-firebase.html](https://tandath.github.io/KIEM_TRA_THI_EXAM/student-firebase.html)
 
 ## 📦 Cài Đặt
 
