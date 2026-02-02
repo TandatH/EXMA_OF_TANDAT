@@ -3,204 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giáo Viên - Firebase</title>
+    <title>Giáo Viên - Quản Lý Thi (Full)</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* Thêm CSS sửa lỗi nhanh */
+        .hidden { display: none !important; }
+        .active-row { background-color: #e8f5e9; }
+        .btn-delete { background: #ff4444; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Config -->
-        <div id="configSection" class="card">
+        
+        <div style="text-align: center; padding: 10px;">
+            <span id="sysStatus" style="font-weight: bold; color: red;">🔴 Đang kết nối...</span>
+        </div>
+
+        <div id="configSection" class="card hidden">
             <h1>⚙️ Cấu Hình Firebase</h1>
-            <p class="hint">Chỉ cần làm 1 lần - Đọc FIREBASE.md để biết cách lấy</p>
-            
-            <div class="form-group">
-                <label>API Key:</label>
-                <input type="text" id="apiKey" placeholder="AIzaSy..." class="input-field">
-            </div>
-            
-            <div class="form-group">
-                <label>Database URL:</label>
-                <input type="text" id="databaseURL" placeholder="https://...firebaseio.com" class="input-field">
-            </div>
-            
-            <div class="form-group">
-                <label>Project ID:</label>
-                <input type="text" id="projectId" placeholder="your-project" class="input-field">
-            </div>
-            
-            <button onclick="saveConfig()" class="btn btn-primary">Lưu & Kết Nối</button>
-            <button onclick="useLocal()" class="btn btn-secondary">Bỏ Qua</button>
-            
-            <div class="info-box" style="margin-top:20px;">
-                <h3>📖 Nhanh:</h3>
-                <ol>
-                    <li>Vào: <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
-                    <li>Tạo project</li>
-                    <li>Realtime Database > Create > Test mode</li>
-                    <li>Settings > Web app > Copy 3 thông tin</li>
-                </ol>
-            </div>
+            <p>Đã tích hợp cứng trong code. Đang tự động kết nối...</p>
         </div>
 
-        <!-- Login -->
         <div id="loginSection" class="card hidden">
-            <h1>Đăng Nhập</h1>
-            <div id="status" class="hint">🔴 Chưa kết nối</div>
-            <input type="text" id="teacherName" placeholder="Tên GV" class="input-field">
+            <h1>Đăng Nhập Admin</h1>
+            <input type="text" id="teacherName" placeholder="Tên đăng nhập (Mặc định: admin)" class="input-field">
             <button onclick="login()" class="btn btn-primary">Đăng Nhập</button>
-            <button onclick="reconfig()" class="btn btn-secondary">Cấu hình lại</button>
         </div>
 
-        <!-- Main -->
         <div id="mainSection" class="card hidden">
-            <div class="header">
-                <h1>Quản Lý <span id="indicator">🟢</span></h1>
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>Quản Lý Thi <span id="indicator">🟢</span></h1>
                 <button onclick="logout()" class="btn btn-secondary">Đăng Xuất</button>
             </div>
 
             <div class="form-group">
                 <label>Tên Đề:</label>
-                <input type="text" id="examTitle" placeholder="VD: Toán 10" class="input-field">
+                <input type="text" id="examTitle" placeholder="VD: Kiểm tra 1 tiết Toán" class="input-field">
             </div>
 
             <div class="form-group">
                 <label>Thời Gian (phút):</label>
-                <input type="number" id="duration" value="30" min="1" class="input-field">
+                <input type="number" id="duration" value="45" min="1" class="input-field">
             </div>
 
             <div class="form-group">
-                <label>Mã LaTeX:</label>
-                <textarea id="latex" class="textarea-field" rows="10" placeholder="\question Câu hỏi?
-\choice A
-\CorrectChoice B
-\choice C"></textarea>
+                <label>Nội dung câu hỏi (LaTeX):</label>
+                <textarea id="latex" class="textarea-field" rows="10" placeholder="\question 1+1=?
+\choice 1
+\CorrectChoice 2
+\choice 3"></textarea>
             </div>
 
-            <button onclick="createExam()" class="btn btn-primary">Tạo Đề</button>
+            <button onclick="createExam()" class="btn btn-primary">Xem Trước & Tạo Đề</button>
 
-            <div id="preview" class="hidden">
+            <div id="preview" class="hidden" style="margin-top: 20px; border: 1px solid #ddd; padding: 10px;">
                 <h2>Xem Trước</h2>
                 <div id="previewBox" class="preview-box"></div>
-                <button onclick="saveExam()" class="btn btn-success">Lưu & Tạo Mã</button>
+                <br>
+                <button onclick="saveExam()" class="btn btn-success">✅ LƯU LÊN SERVER & LẤY MÃ</button>
             </div>
 
-            <div id="codeBox" class="hidden">
-                <h2>Mã Đề Thi</h2>
-                <div class="code-display">
-                    <p>Mã: <strong id="code"></strong></p>
-                    <button onclick="copy()" class="btn btn-secondary">Copy</button>
-                </div>
+            <div id="codeBox" class="hidden" style="background: #e3f2fd; padding: 15px; margin-top: 15px; text-align: center; border-radius: 8px;">
+                <h2>MÃ ĐỀ THI: <span id="code" style="color: blue; font-size: 24px;">...</span></h2>
+                <p>Gửi mã này cho học sinh để làm bài.</p>
             </div>
+
+            <hr style="margin: 30px 0;">
 
             <div id="activeSection">
-                <h2>Đề Hoạt Động</h2>
-                <div id="activeList" class="preview-box"></div>
+                <h2>Danh Sách Đề Đang Mở</h2>
+                <div id="activeList"></div>
             </div>
 
+            <hr style="margin: 30px 0;">
+
             <div id="resultsSection">
-                <h2>Kết Quả (Realtime)</h2>
-                <div class="results-actions">
-                    <button onclick="downloadExcel()" class="btn btn-success">📥 Excel</button>
-                    <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa</button>
-                    <button onclick="refresh()" class="btn btn-secondary">🔄</button>
+                <h2>Kết Quả Học Sinh (Realtime)</h2>
+                <div class="results-actions" style="margin-bottom: 15px;">
+                    <button onclick="downloadExcel()" class="btn btn-success">📥 Xuất Excel</button>
+                    <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa Tất Cả</button>
+                    <button onclick="refresh()" class="btn btn-secondary">🔄 Làm mới</button>
                 </div>
-                <div id="resultsList" class="results-box"></div>
+                <div id="resultsList" class="results-box">
+                    <p>Chưa có bài nộp nào...</p>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <script>
-        // --- 1. KHAI BÁO BIẾN ---
+        // ======================================================
+        // 🔴 BƯỚC QUAN TRỌNG: ĐIỀN THÔNG TIN CỦA BẠN VÀO ĐÂY
+        // ======================================================
+        const config = {
+            apiKey: "AIzaSyADniEL6bbqGpa1a4O_k1Q0w5GRW5cfWjY", 
+            databaseURL: "https://exam-project-4ef04-default-rtdb.firebaseio.com", 
+            projectId: "exam-project-4ef04"
+        };
+        // ======================================================
+
         let db = null;
-        let exam = null;
-        let results = [];
+        let exam = null; // Biến lưu đề tạm thời
+        let results = []; // Biến lưu kết quả
 
-        // --- 2. HÀM CẤU HÌNH (Nút Lưu & Kết Nối) ---
-        function saveConfig() {
-            console.log("Đang kết nối...");
-            const apiKey = document.getElementById("apiKey").value.trim();
-            let dbURL = document.getElementById("databaseURL").value.trim();
-            const projectId = document.getElementById("projectId").value.trim();
-
-            if (!apiKey || !dbURL || !projectId) {
-                alert("⚠️ Vui lòng điền đủ 3 ô thông tin!");
-                return;
-            }
-
-            // Sửa lỗi dư dấu /
-            if (dbURL.endsWith("/")) dbURL = dbURL.slice(0, -1);
-
-            const config = {
-                apiKey: apiKey,
-                databaseURL: dbURL,
-                projectId: projectId,
-                authDomain: projectId + ".firebaseapp.com"
-            };
-
+        // 1. TỰ ĐỘNG KẾT NỐI
+        window.onload = function() {
             try {
+                if (config.databaseURL.endsWith("/")) config.databaseURL = config.databaseURL.slice(0, -1);
+                config.authDomain = config.projectId + ".firebaseapp.com";
+
                 if (!firebase.apps.length) firebase.initializeApp(config);
                 db = firebase.database();
 
-                // Kiểm tra kết nối
-                alert("⏳ Đang thử kết nối... Vui lòng đợi 3s");
+                const sysStatus = document.getElementById("sysStatus");
                 
-                db.ref(".info/connected").once("value", (snap) => {
+                db.ref(".info/connected").on("value", (snap) => {
                     if (snap.val() === true) {
-                        alert("✅ KẾT NỐI THÀNH CÔNG!\nBạn có thể đăng nhập ngay.");
-                        localStorage.setItem("fbConfig", JSON.stringify(config));
-                        // Chuyển màn hình
-                        document.getElementById("configSection").classList.add("hidden");
-                        document.getElementById("loginSection").classList.remove("hidden");
+                        sysStatus.textContent = "🟢 Đã kết nối máy chủ";
+                        sysStatus.style.color = "green";
+                        
+                        // Nếu đã từng đăng nhập thì vào thẳng
+                        if(localStorage.getItem("teacherLog")) {
+                            document.getElementById("loginSection").classList.add("hidden");
+                            document.getElementById("mainSection").classList.remove("hidden");
+                            loadActiveExams();
+                            loadResults();
+                        } else {
+                            document.getElementById("loginSection").classList.remove("hidden");
+                        }
                     } else {
-                        alert("❌ KẾT NỐI BỊ TỪ CHỐI!\nHãy vào Firebase Console -> Tab 'Rules' -> Sửa false thành true.");
+                        sysStatus.textContent = "🔴 Mất kết nối mạng...";
+                        sysStatus.style.color = "red";
                     }
-                }, (error) => {
-                    alert("❌ LỖI MẠNG/URL: " + error.message);
                 });
-
             } catch (e) {
-                alert("❌ Lỗi Code: " + e.message);
+                alert("⚠️ Lỗi cấu hình: Chưa điền API Key vào code!");
             }
-        }
+        };
 
-        // --- 3. HÀM BỎ QUA (Nút Bỏ Qua) ---
-        function useLocal() {
-            alert("⚠️ Đã vào chế độ Offline (Test giao diện)");
-            document.getElementById("configSection").classList.add("hidden");
-            document.getElementById("loginSection").classList.remove("hidden");
-        }
-
-        // --- 4. CÁC HÀM KHÁC (Đăng nhập,...) ---
+        // 2. ĐĂNG NHẬP
         function login() {
-            const name = document.getElementById("teacherName").value;
-            if (name) {
+            const name = document.getElementById("teacherName").value.trim();
+            if (["admin", "giaovien", "teacher"].includes(name.toLowerCase()) || name.length > 0) {
+                localStorage.setItem("teacherLog", name);
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("mainSection").classList.remove("hidden");
-                loadResults(); // Tải dữ liệu mẫu
+                loadActiveExams();
+                loadResults();
             } else {
-                alert("Nhập tên GV đi bạn ơi!");
+                alert("Vui lòng nhập tên đăng nhập!");
             }
         }
 
-        function createExam() {
-            alert("Tính năng tạo đề đang tắt ở chế độ sửa lỗi này.");
+        function logout() {
+            localStorage.removeItem("teacherLog");
+            location.reload();
         }
 
-        function loadResults() {
-           // Giả lập kết quả để test
-           const list = document.getElementById("resultsList");
-           if(list) list.innerHTML = "<p>✅ Hệ thống đã hoạt động!</p>";
+        // 3. XỬ LÝ ĐỀ THI (LATEX)
+        function createExam() {
+            const title = document.getElementById("examTitle").value;
+            const duration = document.getElementById("duration").value;
+            const text = document.getElementById("latex").value;
+
+            if (!title || !text) return alert("Thiếu tiêu đề hoặc nội dung!");
+
+            // Phân tích LaTeX
+            const questions = [];
+            const parts = text.split("\\question");
+            
+            parts.forEach(part => {
+                if(!part.trim()) return;
+                const lines = part.split("\n").filter(l => l.trim());
+                const qText = lines[0];
+                const choices = [];
+                let correct = -1;
+
+                lines.slice(1).forEach(line => {
+                    if (line.includes("\\choice")) choices.push(line.replace("\\choice", "").trim());
+                    if (line.includes("\\CorrectChoice")) {
+                        correct = choices.length;
+                        choices.push(line.replace("\\CorrectChoice", "").trim());
+                    }
+                });
+
+                if (choices.length > 0) {
+                    questions.push({ question: qText, choices: choices, correctAnswer: correct });
+                }
+            });
+
+            if (questions.length === 0) return alert("Không tìm thấy câu hỏi nào!");
+
+            exam = {
+                title: title,
+                duration: parseInt(duration),
+                questions: questions,
+                active: true,
+                createdAt: Date.now()
+            };
+
+            // Hiện xem trước
+            const previewBox = document.getElementById("previewBox");
+            previewBox.innerHTML = questions.map((q, i) => 
+                `<div><b>Câu ${i+1}:</b> ${q.question} <br> <i>Đáp án: ${String.fromCharCode(65+q.correctAnswer)}</i></div>`
+            ).join("<hr>");
+            
+            document.getElementById("preview").classList.remove("hidden");
         }
-        
-        // Tự động chạy khi tải trang
-        window.onload = function() {
-            console.log("Trang web đã tải xong!");
+
+        // 4. LƯU ĐỀ LÊN SERVER
+        function saveExam() {
+            if (!exam) return;
+            const code = Math.random().toString(36).substr(2, 6).toUpperCase();
+            exam.code = code;
+
+            db.ref("exams/" + code).set(exam).then(() => {
+                document.getElementById("code").textContent = code;
+                document.getElementById("codeBox").classList.remove("hidden");
+                alert("✅ Đã tạo đề thành công!\nMã đề: " + code);
+                loadActiveExams();
+            }).catch(e => alert("Lỗi: " + e.message));
+        }
+
+        // 5. QUẢN LÝ ĐỀ THI
+        function loadActiveExams() {
+            db.ref("exams").orderByChild("active").equalTo(true).on("value", snap => {
+                const list = document.getElementById("activeList");
+                const data = snap.val() || {};
+                
+                if (Object.keys(data).length === 0) {
+                    list.innerHTML = "<p>Không có đề thi nào đang mở.</p>";
+                    return;
+                }
+
+                list.innerHTML = Object.keys(data).map(key => {
+                    const ex = data[key];
+                    return `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
+                        <span><b>${key}</b> - ${ex.title} (${ex.duration} phút)</span>
+                        <button class="btn-delete" onclick="closeExam('${key}')">Đóng Đề</button>
+                    </div>`;
+                }).join("");
+            });
+        }
+
+        function closeExam(code) {
+            if(confirm("Học sinh sẽ không thể vào thi đề này nữa?")) {
+                db.ref("exams/" + code + "/active").set(false);
+            }
+        }
+
+        // 6. XEM KẾT QUẢ & EXCEL
+        function loadResults() {
+            db.ref("results").on("value", snap => {
+                results = [];
+                const data = snap.val() || {};
+                const list = document.getElementById("resultsList");
+                
+                if (!data) {
+                    list.innerHTML = "<p>Chưa có kết quả.</p>";
+                    return;
+                }
+
+                // Chuyển object thành array
+                Object.keys(data).forEach(key => {
+                    results.push(data[key]);
+                });
+
+                // Sắp xếp mới nhất lên đầu
+                results.sort((a, b) => b.timestamp - a.timestamp);
+
+                // Render bảng
+                let html = `<table style="width:100%; border-collapse:collapse;">
+                    <tr style="background:#f2f2f2;"><th>Thời gian</th><th>Họ tên</th><th>Mã đề</th><th>Điểm</th><th>Cảnh báo</th></tr>`;
+                
+                results.forEach(r => {
+                    const time = new Date(r.timestamp).toLocaleTimeString();
+                    const warning = r.tabSwitch ? '<span style="color:red">⚠️ Tab</span>' : '<span style="color:green">Sạch</span>';
+                    html += `<tr style="border-bottom:1px solid #ddd; text-align:center;">
+                        <td>${time}</td>
+                        <td style="font-weight:bold">${r.name}</td>
+                        <td>${r.code}</td>
+                        <td style="color:blue; font-weight:bold">${r.score}</td>
+                        <td>${warning}</td>
+                    </tr>`;
+                });
+                html += "</table>";
+                list.innerHTML = html;
+            });
+        }
+
+        function downloadExcel() {
+            if (results.length === 0) return alert("Chưa có dữ liệu!");
+            
+            const dataExport = results.map(r => ({
+                "Thời Gian": new Date(r.timestamp).toLocaleString(),
+                "Họ Tên": r.name,
+                "Mã Đề": r.code,
+                "Điểm": parseFloat(r.score),
+                "Số Câu Đúng": r.correct,
+                "Tổng Câu": r.total,
+                "Gian Lận": r.tabSwitch ? "Có (Chuyển Tab)" : "Không"
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dataExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "KetQuaThi");
+            XLSX.writeFile(wb, "DanhSachDiem.xlsx");
+        }
+
+        function clearResults() {
+            if(confirm("⚠️ CẢNH BÁO: Xóa toàn bộ kết quả thi?\nHành động này không thể phục hồi!")) {
+                db.ref("results").remove();
+                alert("Đã xóa sạch dữ liệu.");
+            }
+        }
+
+        function refresh() {
+            location.reload();
+        }
+
+        function copy() {
+             const code = document.getElementById("code").textContent;
+             navigator.clipboard.writeText(code);
+             alert("Đã copy: " + code);
         }
     </script>
-</body>
-</html>
 </body>
 </html>
