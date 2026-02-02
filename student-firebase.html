@@ -3,66 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Học Sinh - Firebase</title>
+    <title>Học Sinh - Làm Bài Thi</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* CSS CƠ BẢN */
+        .hidden { display: none !important; }
+        .card { max-width: 700px; margin: 20px auto; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .input-field { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; color: white; margin-top: 10px; }
+        .btn-primary { background: #007bff; }
+        .btn-success { background: #28a745; }
+        
+        /* CÂU HỎI */
+        .question-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #007bff; }
+        .question-text { font-weight: bold; font-size: 1.1em; margin-bottom: 10px; }
+        .choice-label { display: block; padding: 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s; }
+        .choice-label:hover { background: #e9ecef; }
+        input[type="radio"] { margin-right: 10px; transform: scale(1.2); }
+
+        /* ĐỒNG HỒ & TRẠNG THÁI */
+        .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+        .timer { font-size: 24px; font-weight: bold; color: #dc3545; background: #fff0f0; padding: 5px 15px; border-radius: 20px; }
+        
+        /* CẢNH BÁO GIAN LẬN (MODAL) */
+        #cheatModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(220, 53, 69, 0.95); /* Màu đỏ đậm */
+            color: white; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center;
+        }
+        #cheatModal h1 { font-size: 40px; margin-bottom: 20px; }
+        #cheatModal p { font-size: 20px; }
+        #cheatModal button { background: white; color: red; border: none; padding: 15px 30px; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 50px; margin-top: 30px; }
+
+        /* KẾT QUẢ */
+        .score-circle { width: 120px; height: 120px; background: #28a745; color: white; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0 auto 20px; }
+        .score-number { font-size: 40px; font-weight: bold; }
+    </style>
 </head>
 <body>
+
+    <div id="cheatModal" class="hidden">
+        <h1>⚠️ CẢNH BÁO VI PHẠM!</h1>
+        <p>Hệ thống phát hiện bạn vừa rời khỏi màn hình làm bài.</p>
+        <p>Hành động này đã bị ghi lại và báo cáo cho Giáo viên.</p>
+        <p>Nếu tiếp tục, bài thi sẽ bị hủy.</p>
+        <button onclick="closeCheatModal()">TÔI ĐÃ HIỂU, QUAY LẠI LÀM BÀI</button>
+    </div>
+
     <div class="container">
+        
         <div id="loginSection" class="card">
-            <h1>Đăng Nhập Học Sinh</h1>
-            <div id="status" class="hint">⏳ Đang kết nối...</div>
-            <input type="text" id="name" placeholder="Họ tên" class="input-field">
-            <input type="text" id="code" placeholder="Mã đề thi" class="input-field">
-            <button onclick="login()" class="btn btn-primary">Đăng Nhập</button>
+            <h2 style="text-align: center;">Đăng Nhập Thi</h2>
+            <p id="status" style="text-align: center; color: #666;">⏳ Đang kết nối máy chủ...</p>
+            
+            <label>Họ và Tên:</label>
+            <input type="text" id="name" class="input-field" placeholder="Nhập tên của bạn...">
+            
+            <label>Mã Đề Thi:</label>
+            <input type="text" id="code" class="input-field" placeholder="Nhập mã do GV cung cấp (VD: X8K2MN)">
+            
+            <button onclick="login()" class="btn btn-primary">VÀO PHÒNG THI</button>
         </div>
 
-        <div id="waitingSection" class="card hidden">
-            <h1 id="welcome">Chào mừng!</h1>
-            <div class="exam-info">
-                <h2 id="title"></h2>
-                <p>Thời gian: <strong id="duration"></strong> phút</p>
-                <p>Số câu: <strong id="count"></strong></p>
+        <div id="waitingSection" class="card hidden" style="text-align: center;">
+            <h1>👋 Xin chào, <span id="welcomeName" style="color: #007bff;"></span></h1>
+            <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h2 id="examTitle">Tên Đề Thi</h2>
+                <div style="display: flex; justify-content: space-around; margin-top: 15px;">
+                    <div>⏱️ <strong><span id="examDuration">0</span></strong> phút</div>
+                    <div>📝 <strong><span id="examQCount">0</span></strong> câu hỏi</div>
+                </div>
             </div>
-            <button onclick="start()" class="btn btn-success btn-large">Bắt Đầu</button>
+            <p style="color: red; font-style: italic;">⚠️ Lưu ý: Tuyệt đối không chuyển tab hoặc mở ứng dụng khác. Hệ thống sẽ tự động phát hiện gian lận.</p>
+            <button onclick="startExam()" class="btn btn-success">BẮT ĐẦU LÀM BÀI NGAY</button>
         </div>
 
         <div id="examSection" class="card hidden">
             <div class="exam-header">
-                <h2 id="titleTop"></h2>
-                <div class="timer-display">⏱️ <span id="timer" class="timer">00:00</span></div>
+                <div style="font-weight: bold;">Thí sinh: <span id="studentDisplay"></span></div>
+                <div class="timer" id="timer">00:00</div>
             </div>
-            <div id="warning" class="warning-box hidden">⚠️ KHÔNG CHUYỂN TAB!</div>
-            <div id="questions"></div>
-            <button onclick="submit()" class="btn btn-primary btn-large">Nộp Bài</button>
+
+            <div id="questionsList">
+                </div>
+
+            <button onclick="submitExam()" class="btn btn-primary">NỘP BÀI THI</button>
         </div>
 
-        <div id="resultSection" class="card hidden">
-            <h1>Kết Quả</h1>
-            <div class="result-display">
-                <div class="score-circle">
-                    <span id="score" class="score-number">0</span>
-                    <span class="score-label">/10</span>
-                </div>
-                <p>Họ tên: <strong id="resultName"></strong></p>
-                <p>Đúng: <strong id="correct"></strong>/<strong id="total"></strong></p>
-                <p id="msg" class="status-message"></p>
+        <div id="resultSection" class="card hidden" style="text-align: center;">
+            <h2>KẾT QUẢ BÀI THI</h2>
+            <div class="score-circle">
+                <span id="scoreVal" class="score-number">0</span>
+                <span>Điểm</span>
             </div>
-            <div id="details" class="detailed-results"></div>
+            <h3 id="resultMsg"></h3>
+            <p>Số câu đúng: <strong id="correctCount">0</strong> / <strong id="totalCount">0</strong></p>
+            <div id="cheatWarning" class="hidden" style="margin-top: 15px; padding: 10px; background: #ffebee; color: red; border: 1px solid red; border-radius: 5px;">
+                ⚠️ PHÁT HIỆN GIAN LẬN: <strong id="cheatCount">0</strong> LẦN CHUYỂN TAB
+            </div>
         </div>
+
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <script>
-        // ==========================================
-        // 1. ĐIỀN THÔNG TIN CỦA BẠN VÀO ĐÂY (QUAN TRỌNG)
-        // ==========================================
+        // ============================================================
+        // 🔴 ĐIỀN THÔNG TIN FIREBASE CỦA BẠN VÀO ĐÂY:
+        // ============================================================
         const config = {
-            apiKey: "AIzaSyADniEL6bbqGpa1a4O_k1Q0w5GRW5cfWjY",        // Ví dụ: "AIzaSyD..."
-            databaseURL: "https://exam-project-4ef04-default-rtdb.firebaseio.com",     // Ví dụ: "https://...firebaseio.com"
-            projectId: "exam-project-4ef04"           // Ví dụ: "exam-system-123"
+            apiKey: "AIzaSyADniEL6bbqGpa1a4O_k1Q0w5GRW5cfWjY", 
+            databaseURL: "https://exam-project-4ef04-default-rtdb.firebaseio.com", 
+            projectId: "exam-project-4ef04"
         };
-        // ==========================================
+        // ============================================================
 
         let db = null;
         let examData = null;
@@ -70,187 +127,189 @@
         let examCode = "";
         let timerInterval = null;
         let userAnswers = {};
+        let violationCount = 0; // Đếm số lần gian lận
 
-        // TỰ ĐỘNG KẾT NỐI NGAY KHI MỞ TRANG
-        try {
-            // Xử lý link database nếu thừa dấu /
-            if (config.databaseURL.endsWith("/")) config.databaseURL = config.databaseURL.slice(0, -1);
-            
-            // Thêm authDomain để tránh lỗi
-            config.authDomain = config.projectId + ".firebaseapp.com";
+        // 1. TỰ ĐỘNG KẾT NỐI
+        window.onload = function() {
+            try {
+                if (config.databaseURL.endsWith("/")) config.databaseURL = config.databaseURL.slice(0, -1);
+                config.authDomain = config.projectId + ".firebaseapp.com";
 
-            if (!firebase.apps.length) firebase.initializeApp(config);
-            db = firebase.database();
-            
-            // Kiểm tra kết nối
-            const statusNode = document.getElementById("status");
-            db.ref(".info/connected").on("value", (snap) => {
-                if (snap.val() === true) {
-                    if(statusNode) statusNode.textContent = "🟢 Đã kết nối máy chủ";
-                } else {
-                    if(statusNode) statusNode.textContent = "⏳ Đang dò tìm máy chủ...";
-                }
-            });
+                if (!firebase.apps.length) firebase.initializeApp(config);
+                db = firebase.database();
 
-        } catch (e) {
-            alert("Lỗi Cấu Hình: " + e.message);
-        }
+                const st = document.getElementById("status");
+                db.ref(".info/connected").on("value", snap => {
+                    if(snap.val()) {
+                        st.innerHTML = "🟢 <strong>Đã kết nối máy chủ thi</strong>";
+                        st.style.color = "green";
+                    } else {
+                        st.textContent = "🔴 Mất kết nối mạng...";
+                        st.style.color = "red";
+                    }
+                });
+            } catch (e) {
+                alert("⚠️ Lỗi cấu hình: Chưa điền API Key vào code!");
+            }
+        };
 
-        // --- CHỨC NĂNG 1: ĐĂNG NHẬP ---
+        // 2. ĐĂNG NHẬP
         async function login() {
             studentName = document.getElementById("name").value.trim();
-            examCode = document.getElementById("code").value.trim().toUpperCase(); // Tự viết hoa mã
+            examCode = document.getElementById("code").value.trim().toUpperCase();
 
-            if (!studentName || !examCode) {
-                return alert("Vui lòng nhập Tên và Mã đề thi!");
-            }
+            if (!studentName || !examCode) return alert("Vui lòng điền đầy đủ thông tin!");
 
-            // Tìm đề thi trên Firebase
             try {
-                const snapshot = await db.ref("exams/" + examCode).once("value");
-                const data = snapshot.val();
+                const snap = await db.ref("exams/" + examCode).once("value");
+                const data = snap.val();
 
-                if (!data) {
-                    alert("❌ Mã đề thi không tồn tại!");
-                    return;
-                }
+                if (!data) return alert("❌ Mã đề thi không tồn tại!");
+                if (!data.active) return alert("⛔ Đề thi này đã đóng!");
 
-                if (!data.active) {
-                    alert("⛔ Đề thi này đã bị Giáo viên đóng!");
-                    return;
-                }
-
-                // Thành công -> Hiện thông tin đề
                 examData = data;
+                
+                // Chuyển màn hình
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("waitingSection").classList.remove("hidden");
                 
-                document.getElementById("welcome").textContent = "Chào " + studentName + "!";
-                document.getElementById("title").textContent = data.title;
-                document.getElementById("duration").textContent = data.duration;
-                document.getElementById("count").textContent = data.questions.length + " câu";
+                // Điền thông tin
+                document.getElementById("welcomeName").textContent = studentName;
+                document.getElementById("examTitle").textContent = data.title;
+                document.getElementById("examDuration").textContent = data.duration;
+                document.getElementById("examQCount").textContent = data.questions.length;
 
-            } catch (error) {
-                alert("Lỗi đăng nhập: " + error.message);
+            } catch (e) {
+                alert("Lỗi: " + e.message);
             }
         }
 
-        // --- CHỨC NĂNG 2: BẮT ĐẦU LÀM BÀI ---
-        function start() {
+        // 3. BẮT ĐẦU LÀM BÀI
+        function startExam() {
+            // Yêu cầu full screen (Tùy trình duyệt có cho phép không)
+            try {
+                if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+            } catch (e) { console.log("Không thể full screen"); }
+
             document.getElementById("waitingSection").classList.add("hidden");
             document.getElementById("examSection").classList.remove("hidden");
-            document.getElementById("titleTop").textContent = examData.title;
+            document.getElementById("studentDisplay").textContent = studentName;
 
-            // Hiển thị câu hỏi
             renderQuestions();
-
-            // Bắt đầu đếm ngược
-            let timeLeft = examData.duration * 60; // Đổi ra giây
-            updateTimerDisplay(timeLeft);
-
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay(timeLeft);
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    alert("⏰ HẾT GIỜ! Hệ thống sẽ tự nộp bài.");
-                    submit(true); // true = nộp do hết giờ
-                }
-            }, 1000);
-
-            // Bắt sự kiện chuyển Tab (Chống gian lận)
-            document.addEventListener("visibilitychange", () => {
-                if (document.hidden) {
-                    document.getElementById("warning").classList.remove("hidden");
-                    // Bạn có thể bỏ comment dòng dưới nếu muốn nộp bài luôn khi chuyển tab
-                    // submit(true); 
-                }
-            });
-        }
-
-        function updateTimerDisplay(seconds) {
-            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-            const s = (seconds % 60).toString().padStart(2, '0');
-            document.getElementById("timer").textContent = `${m}:${s}`;
+            startTimer(examData.duration * 60);
+            
+            // KÍCH HOẠT CHẾ ĐỘ CHỐNG GIAN LẬN
+            enableAntiCheat();
         }
 
         function renderQuestions() {
-            const container = document.getElementById("questions");
-            container.innerHTML = "";
-
+            const list = document.getElementById("questionsList");
+            list.innerHTML = "";
+            
             examData.questions.forEach((q, index) => {
-                // Tạo khung câu hỏi
-                const div = document.createElement("div");
-                div.className = "question-box"; // CSS class giả định
-                div.style.marginBottom = "20px";
-                div.style.padding = "15px";
-                div.style.background = "#f9f9f9";
-                div.style.borderRadius = "8px";
-
-                let html = `<div><strong>Câu ${index + 1}:</strong> ${q.question}</div>`;
-                
-                // Tạo các lựa chọn
+                let html = `
+                    <div class="question-box">
+                        <div class="question-text">Câu ${index + 1}: ${q.question}</div>
+                `;
                 q.choices.forEach((choice, cIndex) => {
-                    const choiceId = `q${index}_c${cIndex}`;
                     html += `
-                        <div style="margin-top: 8px;">
-                            <input type="radio" name="q${index}" id="${choiceId}" value="${cIndex}" onchange="selectAnswer(${index}, ${cIndex})">
-                            <label for="${choiceId}" style="cursor:pointer; margin-left: 5px;">
-                                ${String.fromCharCode(65 + cIndex)}. ${choice}
-                            </label>
-                        </div>
+                        <label class="choice-label">
+                            <input type="radio" name="q${index}" value="${cIndex}" onchange="userAnswers[${index}]=${cIndex}">
+                            <span>${String.fromCharCode(65 + cIndex)}. ${choice}</span>
+                        </label>
                     `;
                 });
-
-                div.innerHTML = html;
-                container.appendChild(div);
+                list.innerHTML += html + "</div>";
             });
         }
 
-        function selectAnswer(qIndex, cIndex) {
-            userAnswers[qIndex] = cIndex;
+        function startTimer(seconds) {
+            updateTimerUI(seconds);
+            timerInterval = setInterval(() => {
+                seconds--;
+                updateTimerUI(seconds);
+                if (seconds <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏰ HẾT GIỜ! Hệ thống sẽ tự nộp bài.");
+                    submitExam(true);
+                }
+            }, 1000);
         }
 
-        // --- CHỨC NĂNG 3: NỘP BÀI ---
-        async function submit(autoSubmit = false) {
-            if (!autoSubmit && !confirm("Bạn chắc chắn muốn nộp bài?")) return;
+        function updateTimerUI(s) {
+            const min = Math.floor(s / 60).toString().padStart(2, '0');
+            const sec = (s % 60).toString().padStart(2, '0');
+            const timerEl = document.getElementById("timer");
+            timerEl.textContent = `${min}:${sec}`;
+            
+            // Đổi màu khi sắp hết giờ
+            if(s < 60) { timerEl.style.background = "red"; timerEl.style.color = "white"; }
+        }
 
+        // --- CHỐNG GIAN LẬN (QUAN TRỌNG) ---
+        function enableAntiCheat() {
+            document.addEventListener("visibilitychange", () => {
+                // Nếu tab bị ẩn (người dùng chuyển tab hoặc minimize)
+                if (document.hidden) {
+                    violationCount++; // Tăng số lần vi phạm
+                    document.title = "⚠️ QUAY LẠI NGAY!"; // Đổi tên tab
+                    document.getElementById("cheatModal").classList.remove("hidden"); // Hiện màn hình đỏ
+                } else {
+                    document.title = "Làm Bài Thi";
+                }
+            });
+            
+            // Chặn chuột phải (để hạn chế copy)
+            document.addEventListener('contextmenu', event => event.preventDefault());
+        }
+
+        function closeCheatModal() {
+            document.getElementById("cheatModal").classList.add("hidden");
+        }
+
+        // 4. NỘP BÀI
+        async function submitExam(auto = false) {
+            if (!auto && !confirm("Bạn chắc chắn muốn nộp bài?")) return;
             clearInterval(timerInterval);
 
             // Tính điểm
-            let correctCount = 0;
-            examData.questions.forEach((q, index) => {
-                if (userAnswers[index] === q.correctAnswer) {
-                    correctCount++;
-                }
+            let correct = 0;
+            examData.questions.forEach((q, i) => {
+                if (userAnswers[i] === q.correctAnswer) correct++;
             });
-
+            
             const total = examData.questions.length;
-            const score = (correctCount / total * 10).toFixed(1);
+            const score = (correct / total * 10).toFixed(1);
+            const isCheated = violationCount > 0;
 
-            // Gửi kết quả lên Firebase
+            // Gửi kết quả
             const resultData = {
                 name: studentName,
                 code: examCode,
                 score: score,
-                correct: correctCount,
+                correct: correct,
                 total: total,
-                examTitle: examData.title,
-                time: Date.now(),
-                tabSwitch: !document.getElementById("warning").classList.contains("hidden")
+                timestamp: Date.now(),
+                tabSwitch: isCheated, // Gửi cờ báo gian lận
+                violationCount: violationCount // Gửi số lần vi phạm
             };
 
             await db.ref("results").push(resultData);
 
-            // Hiển thị kết quả
+            // Hiện kết quả
             document.getElementById("examSection").classList.add("hidden");
             document.getElementById("resultSection").classList.remove("hidden");
-            
-            document.getElementById("score").textContent = score;
-            document.getElementById("resultName").textContent = studentName;
-            document.getElementById("correct").textContent = correctCount;
-            document.getElementById("total").textContent = total;
-            document.getElementById("msg").textContent = autoSubmit ? "⚠️ Đã tự động nộp bài!" : "✅ Nộp bài thành công!";
+            document.getElementById("scoreVal").textContent = score;
+            document.getElementById("correctCount").textContent = correct;
+            document.getElementById("totalCount").textContent = total;
+            document.getElementById("resultMsg").textContent = auto ? "Hết giờ làm bài!" : "Nộp bài thành công!";
+
+            // Nếu có gian lận thì hiện cảnh báo ở kết quả
+            if (isCheated) {
+                const w = document.getElementById("cheatWarning");
+                w.classList.remove("hidden");
+                document.getElementById("cheatCount").textContent = violationCount;
+            }
         }
     </script>
 </body>
