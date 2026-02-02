@@ -3,14 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giáo Viên - Quản Lý Thi (Full)</title>
+    <title>Giáo Viên - Quản Lý Thi Pro</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* Thêm CSS sửa lỗi nhanh */
         .hidden { display: none !important; }
-        .active-row { background-color: #e8f5e9; }
-        .btn-delete { background: #ff4444; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .card { max-width: 800px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; color: white; font-weight: bold; margin: 5px; }
+        .btn-primary { background: #007bff; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        .btn-secondary { background: #6c757d; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background: #f8f9fa; }
     </style>
 </head>
 <body>
@@ -22,72 +29,54 @@
 
         <div id="configSection" class="card hidden">
             <h1>⚙️ Cấu Hình Firebase</h1>
-            <p>Đã tích hợp cứng trong code. Đang tự động kết nối...</p>
+            <p>Đang tự động kết nối...</p>
         </div>
 
         <div id="loginSection" class="card hidden">
             <h1>Đăng Nhập Admin</h1>
-            <input type="text" id="teacherName" placeholder="Tên đăng nhập (Mặc định: admin)" class="input-field">
+            <input type="text" id="teacherName" placeholder="Tên đăng nhập (Mặc định: admin)">
             <button onclick="login()" class="btn btn-primary">Đăng Nhập</button>
         </div>
 
         <div id="mainSection" class="card hidden">
-            <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h1>Quản Lý Thi <span id="indicator">🟢</span></h1>
                 <button onclick="logout()" class="btn btn-secondary">Đăng Xuất</button>
             </div>
 
-            <div class="form-group">
-                <label>Tên Đề:</label>
-                <input type="text" id="examTitle" placeholder="VD: Kiểm tra 1 tiết Toán" class="input-field">
-            </div>
-
-            <div class="form-group">
-                <label>Thời Gian (phút):</label>
-                <input type="number" id="duration" value="45" min="1" class="input-field">
-            </div>
-
-            <div class="form-group">
-                <label>Nội dung câu hỏi (LaTeX):</label>
-                <textarea id="latex" class="textarea-field" rows="10" placeholder="\question 1+1=?
-\choice 1
-\CorrectChoice 2
-\choice 3"></textarea>
-            </div>
-
+            <h3>📝 Tạo Đề Mới</h3>
+            <input type="text" id="examTitle" placeholder="Tên đề thi (VD: Kiểm tra 15 phút)">
+            <input type="number" id="duration" value="45" placeholder="Thời gian (phút)">
+            <textarea id="latex" rows="8" placeholder="\question 1+1=?&#10;\choice 1&#10;\CorrectChoice 2&#10;\choice 3"></textarea>
             <button onclick="createExam()" class="btn btn-primary">Xem Trước & Tạo Đề</button>
 
             <div id="preview" class="hidden" style="margin-top: 20px; border: 1px solid #ddd; padding: 10px;">
                 <h2>Xem Trước</h2>
-                <div id="previewBox" class="preview-box"></div>
+                <div id="previewBox"></div>
                 <br>
-                <button onclick="saveExam()" class="btn btn-success">✅ LƯU LÊN SERVER & LẤY MÃ</button>
+                <button onclick="saveExam()" class="btn btn-success">✅ LƯU & LẤY MÃ</button>
             </div>
 
             <div id="codeBox" class="hidden" style="background: #e3f2fd; padding: 15px; margin-top: 15px; text-align: center; border-radius: 8px;">
                 <h2>MÃ ĐỀ THI: <span id="code" style="color: blue; font-size: 24px;">...</span></h2>
-                <p>Gửi mã này cho học sinh để làm bài.</p>
+                <button onclick="copy()" class="btn btn-secondary btn-sm">Copy Mã</button>
             </div>
 
             <hr style="margin: 30px 0;">
 
-            <div id="activeSection">
-                <h2>Danh Sách Đề Đang Mở</h2>
-                <div id="activeList"></div>
-            </div>
+            <h3>📂 Đề Đang Mở</h3>
+            <div id="activeList"></div>
 
             <hr style="margin: 30px 0;">
 
-            <div id="resultsSection">
-                <h2>Kết Quả Học Sinh (Realtime)</h2>
-                <div class="results-actions" style="margin-bottom: 15px;">
-                    <button onclick="downloadExcel()" class="btn btn-success">📥 Xuất Excel</button>
-                    <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa Tất Cả</button>
-                    <button onclick="refresh()" class="btn btn-secondary">🔄 Làm mới</button>
-                </div>
-                <div id="resultsList" class="results-box">
-                    <p>Chưa có bài nộp nào...</p>
-                </div>
+            <h3>📊 Kết Quả Học Sinh</h3>
+            <div style="margin-bottom: 15px;">
+                <button onclick="downloadExcel()" class="btn btn-success">📥 Xuất Excel (Kèm Thống Kê)</button>
+                <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa Tất Cả</button>
+                <button onclick="refresh()" class="btn btn-secondary">🔄 Làm mới</button>
+            </div>
+            <div id="resultsList">
+                <p>Chưa có bài nộp nào...</p>
             </div>
         </div>
     </div>
@@ -97,7 +86,7 @@
 
     <script>
         // ======================================================
-        // 🔴 BƯỚC QUAN TRỌNG: ĐIỀN THÔNG TIN CỦA BẠN VÀO ĐÂY
+        // 🔴 ĐIỀN THÔNG TIN FIREBASE CỦA BẠN VÀO ĐÂY:
         // ======================================================
         const config = {
             apiKey: "AIzaSyADniEL6bbqGpa1a4O_k1Q0w5GRW5cfWjY", 
@@ -107,26 +96,22 @@
         // ======================================================
 
         let db = null;
-        let exam = null; // Biến lưu đề tạm thời
-        let results = []; // Biến lưu kết quả
+        let exam = null;
+        let results = [];
 
-        // 1. TỰ ĐỘNG KẾT NỐI
+        // 1. KẾT NỐI
         window.onload = function() {
             try {
                 if (config.databaseURL.endsWith("/")) config.databaseURL = config.databaseURL.slice(0, -1);
                 config.authDomain = config.projectId + ".firebaseapp.com";
-
                 if (!firebase.apps.length) firebase.initializeApp(config);
                 db = firebase.database();
 
-                const sysStatus = document.getElementById("sysStatus");
-                
                 db.ref(".info/connected").on("value", (snap) => {
+                    const sysStatus = document.getElementById("sysStatus");
                     if (snap.val() === true) {
                         sysStatus.textContent = "🟢 Đã kết nối máy chủ";
                         sysStatus.style.color = "green";
-                        
-                        // Nếu đã từng đăng nhập thì vào thẳng
                         if(localStorage.getItem("teacherLog")) {
                             document.getElementById("loginSection").classList.add("hidden");
                             document.getElementById("mainSection").classList.remove("hidden");
@@ -140,196 +125,158 @@
                         sysStatus.style.color = "red";
                     }
                 });
-            } catch (e) {
-                alert("⚠️ Lỗi cấu hình: Chưa điền API Key vào code!");
-            }
+            } catch (e) { alert("⚠️ Lỗi cấu hình API Key!"); }
         };
 
-        // 2. ĐĂNG NHẬP
+        // 2. LOGIC CƠ BẢN
         function login() {
             const name = document.getElementById("teacherName").value.trim();
-            if (["admin", "giaovien", "teacher"].includes(name.toLowerCase()) || name.length > 0) {
+            if (name) {
                 localStorage.setItem("teacherLog", name);
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("mainSection").classList.remove("hidden");
                 loadActiveExams();
                 loadResults();
-            } else {
-                alert("Vui lòng nhập tên đăng nhập!");
-            }
+            } else alert("Nhập tên đăng nhập!");
         }
 
-        function logout() {
-            localStorage.removeItem("teacherLog");
-            location.reload();
-        }
+        function logout() { localStorage.removeItem("teacherLog"); location.reload(); }
+        function refresh() { location.reload(); }
+        function copy() { navigator.clipboard.writeText(document.getElementById("code").textContent); alert("Đã copy!"); }
 
-        // 3. XỬ LÝ ĐỀ THI (LATEX)
+        // 3. TẠO ĐỀ
         function createExam() {
             const title = document.getElementById("examTitle").value;
             const duration = document.getElementById("duration").value;
             const text = document.getElementById("latex").value;
+            if (!title || !text) return alert("Thiếu thông tin!");
 
-            if (!title || !text) return alert("Thiếu tiêu đề hoặc nội dung!");
-
-            // Phân tích LaTeX
             const questions = [];
             const parts = text.split("\\question");
-            
             parts.forEach(part => {
                 if(!part.trim()) return;
                 const lines = part.split("\n").filter(l => l.trim());
                 const qText = lines[0];
                 const choices = [];
                 let correct = -1;
-
                 lines.slice(1).forEach(line => {
                     if (line.includes("\\choice")) choices.push(line.replace("\\choice", "").trim());
-                    if (line.includes("\\CorrectChoice")) {
-                        correct = choices.length;
-                        choices.push(line.replace("\\CorrectChoice", "").trim());
-                    }
+                    if (line.includes("\\CorrectChoice")) { correct = choices.length; choices.push(line.replace("\\CorrectChoice", "").trim()); }
                 });
-
-                if (choices.length > 0) {
-                    questions.push({ question: qText, choices: choices, correctAnswer: correct });
-                }
+                if (choices.length > 0) questions.push({ question: qText, choices: choices, correctAnswer: correct });
             });
 
-            if (questions.length === 0) return alert("Không tìm thấy câu hỏi nào!");
+            if (questions.length === 0) return alert("Không tìm thấy câu hỏi!");
+            exam = { title, duration: parseInt(duration), questions, active: true, createdAt: Date.now() };
 
-            exam = {
-                title: title,
-                duration: parseInt(duration),
-                questions: questions,
-                active: true,
-                createdAt: Date.now()
-            };
-
-            // Hiện xem trước
             const previewBox = document.getElementById("previewBox");
-            previewBox.innerHTML = questions.map((q, i) => 
-                `<div><b>Câu ${i+1}:</b> ${q.question} <br> <i>Đáp án: ${String.fromCharCode(65+q.correctAnswer)}</i></div>`
-            ).join("<hr>");
-            
+            previewBox.innerHTML = questions.map((q, i) => `<div><b>Câu ${i+1}:</b> ${q.question}</div>`).join("<hr>");
             document.getElementById("preview").classList.remove("hidden");
         }
 
-        // 4. LƯU ĐỀ LÊN SERVER
         function saveExam() {
             if (!exam) return;
             const code = Math.random().toString(36).substr(2, 6).toUpperCase();
             exam.code = code;
-
             db.ref("exams/" + code).set(exam).then(() => {
                 document.getElementById("code").textContent = code;
                 document.getElementById("codeBox").classList.remove("hidden");
-                alert("✅ Đã tạo đề thành công!\nMã đề: " + code);
+                alert("✅ Mã đề: " + code);
                 loadActiveExams();
-            }).catch(e => alert("Lỗi: " + e.message));
+            });
         }
 
-        // 5. QUẢN LÝ ĐỀ THI
         function loadActiveExams() {
             db.ref("exams").orderByChild("active").equalTo(true).on("value", snap => {
                 const list = document.getElementById("activeList");
                 const data = snap.val() || {};
-                
-                if (Object.keys(data).length === 0) {
-                    list.innerHTML = "<p>Không có đề thi nào đang mở.</p>";
-                    return;
-                }
-
-                list.innerHTML = Object.keys(data).map(key => {
-                    const ex = data[key];
-                    return `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-                        <span><b>${key}</b> - ${ex.title} (${ex.duration} phút)</span>
-                        <button class="btn-delete" onclick="closeExam('${key}')">Đóng Đề</button>
-                    </div>`;
-                }).join("");
+                list.innerHTML = Object.keys(data).length === 0 ? "<p>Không có đề nào.</p>" : 
+                Object.keys(data).map(k => `<div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;"><span><b>${k}</b> - ${data[k].title}</span><button class="btn-delete" onclick="closeExam('${k}')">Đóng</button></div>`).join("");
             });
         }
+        function closeExam(code) { if(confirm("Đóng đề này?")) db.ref("exams/" + code + "/active").set(false); }
 
-        function closeExam(code) {
-            if(confirm("Học sinh sẽ không thể vào thi đề này nữa?")) {
-                db.ref("exams/" + code + "/active").set(false);
-            }
-        }
-
-        // 6. XEM KẾT QUẢ & EXCEL
+        // 4. KẾT QUẢ
         function loadResults() {
             db.ref("results").on("value", snap => {
                 results = [];
                 const data = snap.val() || {};
-                const list = document.getElementById("resultsList");
+                if (!data) return document.getElementById("resultsList").innerHTML = "<p>Chưa có kết quả.</p>";
                 
-                if (!data) {
-                    list.innerHTML = "<p>Chưa có kết quả.</p>";
-                    return;
-                }
-
-                // Chuyển object thành array
-                Object.keys(data).forEach(key => {
-                    results.push(data[key]);
-                });
-
-                // Sắp xếp mới nhất lên đầu
+                Object.keys(data).forEach(k => results.push(data[k]));
                 results.sort((a, b) => b.timestamp - a.timestamp);
 
-                // Render bảng
-                let html = `<table style="width:100%; border-collapse:collapse;">
-                    <tr style="background:#f2f2f2;"><th>Thời gian</th><th>Họ tên</th><th>Mã đề</th><th>Điểm</th><th>Cảnh báo</th></tr>`;
-                
+                let html = `<table><tr style="background:#f2f2f2;"><th>Thời gian</th><th>Họ tên</th><th>Mã đề</th><th>Điểm</th><th>Trạng thái</th></tr>`;
                 results.forEach(r => {
-                    const time = new Date(r.timestamp).toLocaleTimeString();
-                    const warning = r.tabSwitch ? '<span style="color:red">⚠️ Tab</span>' : '<span style="color:green">Sạch</span>';
-                    html += `<tr style="border-bottom:1px solid #ddd; text-align:center;">
-                        <td>${time}</td>
-                        <td style="font-weight:bold">${r.name}</td>
-                        <td>${r.code}</td>
-                        <td style="color:blue; font-weight:bold">${r.score}</td>
-                        <td>${warning}</td>
-                    </tr>`;
+                    const status = r.tabSwitch ? '<span style="color:red; font-weight:bold;">⚠️ GIAN LẬN</span>' : '<span style="color:green;">Hợp lệ</span>';
+                    html += `<tr><td>${new Date(r.timestamp).toLocaleTimeString()}</td><td>${r.name}</td><td>${r.code}</td><td><b>${r.score}</b></td><td>${status}</td></tr>`;
                 });
-                html += "</table>";
-                list.innerHTML = html;
+                document.getElementById("resultsList").innerHTML = html + "</table>";
             });
         }
 
+        function clearResults() { if(confirm("Xóa hết kết quả?")) db.ref("results").remove(); }
+
+        // 5. XUẤT EXCEL NÂNG CAO (2 SHEET)
         function downloadExcel() {
-            if (results.length === 0) return alert("Chưa có dữ liệu!");
-            
-            const dataExport = results.map(r => ({
-                "Thời Gian": new Date(r.timestamp).toLocaleString(),
+            if (results.length === 0) return alert("Chưa có dữ liệu để xuất!");
+
+            // --- SHEET 1: CHI TIẾT ---
+            const dataSheet1 = results.map((r, index) => ({
+                "STT": index + 1,
                 "Họ Tên": r.name,
                 "Mã Đề": r.code,
-                "Điểm": parseFloat(r.score),
+                "Điểm Số": parseFloat(r.score),
                 "Số Câu Đúng": r.correct,
-                "Tổng Câu": r.total,
-                "Gian Lận": r.tabSwitch ? "Có (Chuyển Tab)" : "Không"
+                "Tổng Số Câu": r.total,
+                "Gian Lận": r.tabSwitch ? "CÓ" : "Không",
+                "Thời Gian Nộp": new Date(r.timestamp).toLocaleString()
             }));
 
-            const ws = XLSX.utils.json_to_sheet(dataExport);
+            // --- SHEET 2: THỐNG KÊ ---
+            const scores = results.map(r => parseFloat(r.score));
+            const totalStudents = scores.length;
+            const avgScore = (scores.reduce((a, b) => a + b, 0) / totalStudents).toFixed(2);
+            
+            const countGioi = scores.filter(s => s >= 8).length;
+            const countKha = scores.filter(s => s >= 6.5 && s < 8).length;
+            const countTB = scores.filter(s => s >= 5 && s < 6.5).length;
+            const countYeu = scores.filter(s => s < 5).length;
+            const countGianLan = results.filter(r => r.tabSwitch).length;
+
+            const dataSheet2 = [
+                { "Tiêu chí": "Tổng số học sinh", "Giá trị": totalStudents },
+                { "Tiêu chí": "Điểm trung bình", "Giá trị": avgScore },
+                { "Tiêu chí": "Điểm cao nhất", "Giá trị": Math.max(...scores) },
+                { "Tiêu chí": "Điểm thấp nhất", "Giá trị": Math.min(...scores) },
+                { "Tiêu chí": "", "Giá trị": "" }, // Dòng trống
+                { "Tiêu chí": "Giỏi (>= 8.0)", "Giá trị": `${countGioi} (${(countGioi/totalStudents*100).toFixed(1)}%)` },
+                { "Tiêu chí": "Khá (6.5 - 7.9)", "Giá trị": `${countKha} (${(countKha/totalStudents*100).toFixed(1)}%)` },
+                { "Tiêu chí": "Trung Bình (5.0 - 6.4)", "Giá trị": `${countTB} (${(countTB/totalStudents*100).toFixed(1)}%)` },
+                { "Tiêu chí": "Yếu (< 5.0)", "Giá trị": `${countYeu} (${(countYeu/totalStudents*100).toFixed(1)}%)` },
+                { "Tiêu chí": "", "Giá trị": "" },
+                { "Tiêu chí": "SỐ LƯỢNG GIAN LẬN", "Giá trị": countGianLan }
+            ];
+
+            // TẠO FILE EXCEL
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "KetQuaThi");
-            XLSX.writeFile(wb, "DanhSachDiem.xlsx");
-        }
+            
+            // Thêm Sheet 1
+            const ws1 = XLSX.utils.json_to_sheet(dataSheet1);
+            // Chỉnh độ rộng cột Sheet 1
+            ws1['!cols'] = [{wch:5}, {wch:25}, {wch:10}, {wch:10}, {wch:12}, {wch:12}, {wch:10}, {wch:20}];
+            XLSX.utils.book_append_sheet(wb, ws1, "BangDiemChiTiet");
 
-        function clearResults() {
-            if(confirm("⚠️ CẢNH BÁO: Xóa toàn bộ kết quả thi?\nHành động này không thể phục hồi!")) {
-                db.ref("results").remove();
-                alert("Đã xóa sạch dữ liệu.");
-            }
-        }
+            // Thêm Sheet 2
+            const ws2 = XLSX.utils.json_to_sheet(dataSheet2);
+            // Chỉnh độ rộng cột Sheet 2
+            ws2['!cols'] = [{wch:25}, {wch:20}];
+            XLSX.utils.book_append_sheet(wb, ws2, "ThongKeTongQuat");
 
-        function refresh() {
-            location.reload();
-        }
-
-        function copy() {
-             const code = document.getElementById("code").textContent;
-             navigator.clipboard.writeText(code);
-             alert("Đã copy: " + code);
+            // Xuất file
+            const date = new Date();
+            const fileName = `KetQuaThi_${date.getDate()}${date.getMonth()+1}_${date.getHours()}h${date.getMinutes()}.xlsx`;
+            XLSX.writeFile(wb, fileName);
         }
     </script>
 </body>
