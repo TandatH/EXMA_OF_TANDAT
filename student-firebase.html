@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Sinh - Firebase</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div id="loginSection" class="card">
+            <h1>Đăng Nhập Học Sinh</h1>
+            <div id="status" class="hint">⏳ Đang kết nối...</div>
+            <input type="text" id="name" placeholder="Họ tên" class="input-field">
+            <input type="text" id="code" placeholder="Mã đề thi" class="input-field">
+            <button onclick="login()" class="btn btn-primary">Đăng Nhập</button>
+        </div>
+
+        <div id="waitingSection" class="card hidden">
+            <h1 id="welcome">Chào mừng!</h1>
+            <div class="exam-info">
+                <h2 id="title"></h2>
+                <p>Thời gian: <strong id="duration"></strong> phút</p>
+                <p>Số câu: <strong id="count"></strong></p>
+            </div>
+            <button onclick="start()" class="btn btn-success btn-large">Bắt Đầu</button>
+        </div>
+
+        <div id="examSection" class="card hidden">
+            <div class="exam-header">
+                <h2 id="titleTop"></h2>
+                <div class="timer-display">⏱️ <span id="timer" class="timer">00:00</span></div>
+            </div>
+            <div id="warning" class="warning-box hidden">⚠️ KHÔNG CHUYỂN TAB!</div>
+            <div id="questions"></div>
+            <button onclick="submit()" class="btn btn-primary btn-large">Nộp Bài</button>
+        </div>
+
+        <div id="resultSection" class="card hidden">
+            <h1>Kết Quả</h1>
+            <div class="result-display">
+                <div class="score-circle">
+                    <span id="score" class="score-number">0</span>
+                    <span class="score-label">/10</span>
+                </div>
+                <p>Họ tên: <strong id="resultName"></strong></p>
+                <p>Đúng: <strong id="correct"></strong>/<strong id="total"></strong></p>
+                <p id="msg" class="status-message"></p>
+            </div>
+            <div id="details" class="detailed-results"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="student-firebase.js"></script>
+</body>
+</html>

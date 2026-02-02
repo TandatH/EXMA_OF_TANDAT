@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giáo Viên - Firebase</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Config -->
+        <div id="configSection" class="card">
+            <h1>⚙️ Cấu Hình Firebase</h1>
+            <p class="hint">Chỉ cần làm 1 lần - Đọc FIREBASE.md để biết cách lấy</p>
+            
+            <div class="form-group">
+                <label>API Key:</label>
+                <input type="text" id="apiKey" placeholder="AIzaSy..." class="input-field">
+            </div>
+            
+            <div class="form-group">
+                <label>Database URL:</label>
+                <input type="text" id="databaseURL" placeholder="https://...firebaseio.com" class="input-field">
+            </div>
+            
+            <div class="form-group">
+                <label>Project ID:</label>
+                <input type="text" id="projectId" placeholder="your-project" class="input-field">
+            </div>
+            
+            <button onclick="saveConfig()" class="btn btn-primary">Lưu & Kết Nối</button>
+            <button onclick="useLocal()" class="btn btn-secondary">Bỏ Qua</button>
+            
+            <div class="info-box" style="margin-top:20px;">
+                <h3>📖 Nhanh:</h3>
+                <ol>
+                    <li>Vào: <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a></li>
+                    <li>Tạo project</li>
+                    <li>Realtime Database > Create > Test mode</li>
+                    <li>Settings > Web app > Copy 3 thông tin</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Login -->
+        <div id="loginSection" class="card hidden">
+            <h1>Đăng Nhập</h1>
+            <div id="status" class="hint">🔴 Chưa kết nối</div>
+            <input type="text" id="teacherName" placeholder="Tên GV" class="input-field">
+            <button onclick="login()" class="btn btn-primary">Đăng Nhập</button>
+            <button onclick="reconfig()" class="btn btn-secondary">Cấu hình lại</button>
+        </div>
+
+        <!-- Main -->
+        <div id="mainSection" class="card hidden">
+            <div class="header">
+                <h1>Quản Lý <span id="indicator">🟢</span></h1>
+                <button onclick="logout()" class="btn btn-secondary">Đăng Xuất</button>
+            </div>
+
+            <div class="form-group">
+                <label>Tên Đề:</label>
+                <input type="text" id="examTitle" placeholder="VD: Toán 10" class="input-field">
+            </div>
+
+            <div class="form-group">
+                <label>Thời Gian (phút):</label>
+                <input type="number" id="duration" value="30" min="1" class="input-field">
+            </div>
+
+            <div class="form-group">
+                <label>Mã LaTeX:</label>
+                <textarea id="latex" class="textarea-field" rows="10" placeholder="\question Câu hỏi?
+\choice A
+\CorrectChoice B
+\choice C"></textarea>
+            </div>
+
+            <button onclick="createExam()" class="btn btn-primary">Tạo Đề</button>
+
+            <div id="preview" class="hidden">
+                <h2>Xem Trước</h2>
+                <div id="previewBox" class="preview-box"></div>
+                <button onclick="saveExam()" class="btn btn-success">Lưu & Tạo Mã</button>
+            </div>
+
+            <div id="codeBox" class="hidden">
+                <h2>Mã Đề Thi</h2>
+                <div class="code-display">
+                    <p>Mã: <strong id="code"></strong></p>
+                    <button onclick="copy()" class="btn btn-secondary">Copy</button>
+                </div>
+            </div>
+
+            <div id="activeSection">
+                <h2>Đề Hoạt Động</h2>
+                <div id="activeList" class="preview-box"></div>
+            </div>
+
+            <div id="resultsSection">
+                <h2>Kết Quả (Realtime)</h2>
+                <div class="results-actions">
+                    <button onclick="downloadExcel()" class="btn btn-success">📥 Excel</button>
+                    <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa</button>
+                    <button onclick="refresh()" class="btn btn-secondary">🔄</button>
+                </div>
+                <div id="resultsList" class="results-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="teacher-firebase.js"></script>
+</body>
+</html>
