@@ -1,2 +1,486 @@
-// TEACHER-FIREBASE.JS
-let db=null,exam=null,results=[],listener=null;function saveConfig(){const e={apiKey:document.getElementById("apiKey").value.trim(),databaseURL:document.getElementById("databaseURL").value.trim(),projectId:document.getElementById("projectId").value.trim(),authDomain:document.getElementById("projectId").value.trim()+".firebaseapp.com"};if(!e.apiKey||!e.databaseURL||!e.projectId)return void alert("Vui lòng điền đầy đủ!");try{firebase.apps.length||firebase.initializeApp(e),db=firebase.database(),localStorage.setItem("fbConfig",JSON.stringify(e)),db.ref(".info/connected").once("value",e=>{e.val()&&(updateStatus(!0),document.getElementById("configSection").classList.add("hidden"),document.getElementById("loginSection").classList.remove("hidden"),alert("✅ Kết nối thành công!"))}),db.ref(".info/connected").on("value",e=>{updateStatus(e.val())})}catch(e){alert("Lỗi: "+e.message)}}function useLocal(){alert("⚠️ Chế độ Offline"),document.getElementById("configSection").classList.add("hidden"),document.getElementById("loginSection").classList.remove("hidden")}function reconfig(){localStorage.removeItem("fbConfig"),document.getElementById("loginSection").classList.add("hidden"),document.getElementById("configSection").classList.remove("hidden")}function updateStatus(e){const t=document.getElementById("status"),n=document.getElementById("indicator");t&&(t.textContent=e?"🟢 Đã kết nối":"🔴 Mất kết nối"),n&&(n.textContent=e?"🟢":"🔴")}function login(){const e=document.getElementById("teacherName").value.trim();(["admin","giaovien","teacher"].includes(e)||e.toLowerCase().includes("giáo viên"))?(localStorage.setItem("teacher",e),document.getElementById("loginSection").classList.add("hidden"),document.getElementById("mainSection").classList.remove("hidden"),loadActive(),loadResults()):alert("Tên không hợp lệ!")}function logout(){listener&&listener.off(),localStorage.removeItem("teacher"),location.reload()}function createExam(){const e=document.getElementById("examTitle").value.trim(),t=parseInt(document.getElementById("duration").value),n=document.getElementById("latex").value.trim();if(!e||!n)return void alert("Vui lòng điền đầy đủ!");try{const i=parseLatex(n);0===i.length?alert("Không có câu hỏi!"):(exam={title:e,duration:t,questions:i},showPreview(i))}catch(e){alert("Lỗi: "+e.message)}}function parseLatex(e){const t=[];return e.split("\\question").filter(e=>e.trim()).forEach((e,n)=>{const i=e.split("\n").map(e=>e.trim()).filter(e=>e);if(i.length){const e=i[0],s=[];let o=-1;i.slice(1).forEach(e=>{e.startsWith("\\choice")?s.push(e.replace("\\choice","").trim()):e.startsWith("\\CorrectChoice")&&(o=s.length,s.push(e.replace("\\CorrectChoice","").trim()))}),e&&s.length>0&&-1!==o&&t.push({id:n+1,question:e,choices:s,correctAnswer:o})}}),t}function showPreview(e){const t=document.getElementById("previewBox");t.innerHTML="",e.forEach((e,n)=>{const i=document.createElement("div");i.className="question-preview";let s=`<div class="question-text">Câu ${n+1}: ${e.question}</div>`;e.choices.forEach((t,n)=>{const i=n===e.correctAnswer;s+=`<div class="choice-item ${i?"correct-choice":"}">${String.fromCharCode(65+n)}. ${t} ${i?"✓":""}</div>`}),i.innerHTML=s,t.appendChild(i)}),document.getElementById("preview").classList.remove("hidden")}async function saveExam(){if(!exam)return;const e=Math.random().toString(36).substr(2,6).toUpperCase(),t={...exam,code:e,created:(new Date).toISOString(),teacher:localStorage.getItem("teacher"),active:!0};if(db)try{await db.ref("exams/"+e).set(t),alert("✅ Đã lưu!")}catch(e){return void alert("Lỗi: "+e.message)}else{const n=JSON.parse(localStorage.getItem("exams")||"{}");n[e]=t,localStorage.setItem("exams",JSON.stringify(n))}document.getElementById("code").textContent=e,document.getElementById("codeBox").classList.remove("hidden"),loadActive()}function copy(){const e=document.getElementById("code").textContent;navigator.clipboard.writeText(e).then(()=>alert("Đã copy: "+e))}async function loadActive(){const e=document.getElementById("activeList");if(db)db.ref("exams").orderByChild("active").equalTo(!0).once("value",t=>{displayActive(t.val()||{},e)});else{const t=JSON.parse(localStorage.getItem("exams")||"{}"),n={};Object.keys(t).forEach(e=>{t[e].active&&(n[e]=t[e])}),displayActive(n,e)}}function displayActive(e,t){if(0===Object.keys(e).length)return void(t.innerHTML='<p class="hint">Chưa có đề.</p>');let n='<table style="width:100%;border-collapse:collapse;"><tr style="background:#f8f9fa;"><th style="padding:10px;border:1px solid #ddd;">Mã</th><th style="padding:10px;border:1px solid #ddd;">Tên</th><th style="padding:10px;border:1px solid #ddd;">Thời gian</th><th style="padding:10px;border:1px solid #ddd;">Số câu</th><th style="padding:10px;border:1px solid #ddd;">Thao tác</th></tr>';Object.keys(e).forEach(t=>{const i=e[t];n+=`<tr><td style="padding:10px;border:1px solid #ddd;"><strong>${t}</strong></td><td style="padding:10px;border:1px solid #ddd;">${i.title}</td><td style="padding:10px;border:1px solid #ddd;">${i.duration} phút</td><td style="padding:10px;border:1px solid #ddd;">${i.questions.length} câu</td><td style="padding:10px;border:1px solid #ddd;"><button onclick="deactivate('${t}')" class="btn-delete">Tắt</button></td></tr>`}),n+="</table>",t.innerHTML=n}async function deactivate(e){if(!confirm("Tắt đề này?"))return;if(db)await db.ref("exams/"+e+"/active").set(!1);else{const t=JSON.parse(localStorage.getItem("exams")||"{}");t[e]&&(t[e].active=!1),localStorage.setItem("exams",JSON.stringify(t))}loadActive(),alert("Đã tắt!")}function loadResults(){db?(listener=db.ref("results"),listener.on("value",e=>{results=Object.values(e.val()||{}),displayResults()})):(results=JSON.parse(localStorage.getItem("results")||"[]"),displayResults(),setInterval(()=>{results=JSON.parse(localStorage.getItem("results")||"[]"),displayResults()},5e3))}function displayResults(){const e=document.getElementById("resultsList");if(0===results.length)return void(e.innerHTML='<p class="hint">Chưa có kết quả.</p>');let t='<table style="width:100%;border-collapse:collapse;"><tr style="background:#f8f9fa;"><th style="padding:10px;border:1px solid #ddd;">Tên</th><th style="padding:10px;border:1px solid #ddd;">Mã</th><th style="padding:10px;border:1px solid #ddd;">Điểm</th><th style="padding:10px;border:1px solid #ddd;">Thời gian</th><th style="padding:10px;border:1px solid #ddd;">Tab</th><th style="padding:10px;border:1px solid #ddd;">Xóa</th></tr>';results.forEach((e,n)=>{t+=`<tr><td style="padding:10px;border:1px solid #ddd;">${e.name}</td><td style="padding:10px;border:1px solid #ddd;">${e.code}</td><td style="padding:10px;border:1px solid #ddd;"><strong>${e.score}/10</strong></td><td style="padding:10px;border:1px solid #ddd;">${new Date(e.time).toLocaleString("vi-VN")}</td><td style="padding:10px;border:1px solid #ddd;">${e.tabSwitch?"⚠️":"✓"}</td><td style="padding:10px;border:1px solid #ddd;"><button onclick="deleteResult('${e.id||n}')" class="btn-delete">🗑️</button></td></tr>`}),t+="</table>",e.innerHTML=t}async function deleteResult(e){if(!confirm("Xóa?"))return;db?await db.ref("results/"+e).remove():(results=results.filter((t,n)=>(t.id||n)!=e),localStorage.setItem("results",JSON.stringify(results)),displayResults())}async function clearResults(){if(!confirm("⚠️ XÓA TẤT CẢ?"))return;if(!confirm("Xác nhận?"))return;db?await db.ref("results").remove():(localStorage.setItem("results","[]"),results=[],displayResults()),alert("Đã xóa!")}function refresh(){loadResults()}function downloadExcel(){if(0===results.length)return void alert("Không có kết quả!");const e=results.map((e,t)=>({STT:t+1,"Họ tên":e.name,"Mã đề":e.code,"Tên đề":e.examTitle||"",Điểm:e.score,"Số câu đúng":e.correct||0,"Tổng câu":e.total||0,"Tỷ lệ %":e.total?((e.correct/e.total)*100).toFixed(1):0,Tab:e.tabSwitch?"Có":"Không","Thời gian":new Date(e.time).toLocaleString("vi-VN")})),t=XLSX.utils.json_to_sheet(e);t["!cols"]=[{wch:5},{wch:25},{wch:12},{wch:30},{wch:8},{wch:12},{wch:12},{wch:10},{wch:12},{wch:20}];const n=XLSX.utils.book_new();XLSX.utils.book_append_sheet(n,t,"Kết Quả");const i=results.map(e=>e.score),s=XLSX.utils.json_to_sheet([{"Chỉ số":"Tổng HS","Giá trị":results.length},{"Chỉ số":"Điểm TB","Giá trị":(i.reduce((e,t)=>e+t,0)/i.length).toFixed(2)},{"Chỉ số":"Cao nhất","Giá trị":Math.max(...i).toFixed(1)},{"Chỉ số":"Thấp nhất","Giá trị":Math.min(...i).toFixed(1)},{"Chỉ số":"Giỏi","Giá trị":i.filter(e=>e>=8).length},{"Chỉ số":"Khá","Giá trị":i.filter(e=>e>=6.5).length},{"Chỉ số":"TB","Giá trị":i.filter(e=>e>=5).length},{"Chỉ số":"Yếu","Giá trị":i.filter(e=>e<5).length},{"Chỉ số":"Chuyển tab","Giá trị":results.filter(e=>e.tabSwitch).length}]);s["!cols"]=[{wch:20},{wch:15}],XLSX.utils.book_append_sheet(n,s,"Thống Kê");const o=new Date,a=`KetQua_${o.getFullYear()}${String(o.getMonth()+1).padStart(2,"0")}${String(o.getDate()).padStart(2,"0")}_${String(o.getHours()).padStart(2,"0")}${String(o.getMinutes()).padStart(2,"0")}.xlsx`;XLSX.writeFile(n,a),alert("✅ Đã tải: "+a)}window.addEventListener("load",()=>{const e=localStorage.getItem("fbConfig");if(e)try{const t=JSON.parse(e);firebase.apps.length||firebase.initializeApp(t),db=firebase.database(),document.getElementById("configSection").classList.add("hidden"),db.ref(".info/connected").on("value",e=>{updateStatus(e.val())});const n=localStorage.getItem("teacher");n?(document.getElementById("loginSection").classList.add("hidden"),document.getElementById("mainSection").classList.remove("hidden"),loadActive(),loadResults()):document.getElementById("loginSection").classList.remove("hidden")}catch(e){console.error(e)}});
+// TEACHER-FIREBASE.JS - PHIÊN BẢN ĐÃ SỬA LỖI & DỄ ĐỌC
+
+let db = null;
+let exam = null;
+let results = [];
+let listener = null;
+
+// --- CẤU HÌNH & KẾT NỐI ---
+function saveConfig() {
+    const apiKey = document.getElementById("apiKey").value.trim();
+    const dbURL = document.getElementById("databaseURL").value.trim();
+    const projectId = document.getElementById("projectId").value.trim();
+
+    // 1. Kiểm tra dữ liệu nhập
+    if (!apiKey || !dbURL || !projectId) {
+        return alert("⚠️ Vui lòng điền đầy đủ thông tin!");
+    }
+
+    if (!dbURL.startsWith("https://")) {
+        return alert("❌ Database URL phải bắt đầu bằng 'https://'");
+    }
+
+    const config = {
+        apiKey: apiKey,
+        databaseURL: dbURL,
+        projectId: projectId,
+        authDomain: projectId + ".firebaseapp.com"
+    };
+
+    try {
+        // 2. Thử khởi tạo Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(config);
+        } else {
+            console.log("Firebase already initialized, reusing...");
+        }
+        
+        db = firebase.database();
+        
+        // 3. TẠO CƠ CHẾ BẮT LỖI TREO (TIMEOUT)
+        // Nếu sau 5 giây mà chưa kết nối được -> Báo lỗi ngay
+        const connectionTimeout = setTimeout(() => {
+            alert("⏳ Kết nối quá lâu! \n1. Kiểm tra lại Database URL (chính xác từng ký tự).\n2. Kiểm tra lại Rules trong Firebase Console.\n3. Kiểm tra mạng.");
+            updateStatus(false);
+        }, 5000);
+
+        // Thử kết nối thực tế
+        db.ref(".info/connected").once("value", (snap) => {
+            clearTimeout(connectionTimeout); // Hủy bộ đếm thời gian nếu có phản hồi
+            
+            if (snap.val() === true) {
+                // Kết nối thành công
+                localStorage.setItem("fbConfig", JSON.stringify(config));
+                updateStatus(true);
+                
+                document.getElementById("configSection").classList.add("hidden");
+                document.getElementById("loginSection").classList.remove("hidden");
+                alert("✅ Kết nối thành công!");
+
+                // Lắng nghe trạng thái mạng liên tục
+                db.ref(".info/connected").on("value", (snap) => {
+                    updateStatus(snap.val());
+                });
+            } else {
+                alert("❌ Firebase từ chối kết nối. Hãy kiểm tra lại Rules hoặc Internet.");
+            }
+        }, (error) => {
+            clearTimeout(connectionTimeout);
+            alert("❌ Lỗi quyền truy cập: " + error.message);
+        });
+
+    } catch (e) {
+        alert("❌ Lỗi Cấu Hình: " + e.message);
+        console.error(e);
+    }
+}
+
+function useLocal() {
+    alert("⚠️ Chế độ Offline (Dữ liệu sẽ không được lưu lên mạng)");
+    document.getElementById("configSection").classList.add("hidden");
+    document.getElementById("loginSection").classList.remove("hidden");
+}
+
+function reconfig() {
+    if(confirm("Bạn muốn cấu hình lại Firebase?")) {
+        localStorage.removeItem("fbConfig");
+        location.reload();
+    }
+}
+
+function updateStatus(online) {
+    const statusText = document.getElementById("status");
+    const indicator = document.getElementById("indicator");
+    
+    if (statusText) statusText.textContent = online ? "🟢 Đã kết nối" : "🔴 Mất kết nối";
+    if (indicator) indicator.textContent = online ? "🟢" : "🔴";
+}
+
+// --- ĐĂNG NHẬP & QUẢN LÝ ---
+function login() {
+    const name = document.getElementById("teacherName").value.trim();
+    // Chấp nhận các tên sau làm admin
+    const validNames = ["admin", "giaovien", "teacher", "gv"];
+    
+    if (validNames.includes(name) || name.toLowerCase().includes("giáo viên")) {
+        localStorage.setItem("teacher", name);
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("mainSection").classList.remove("hidden");
+        loadActive();
+        loadResults();
+    } else {
+        alert("Tên đăng nhập không hợp lệ! (Gợi ý: admin)");
+    }
+}
+
+function logout() {
+    if (listener) listener.off();
+    localStorage.removeItem("teacher");
+    location.reload();
+}
+
+// --- TẠO ĐỀ THI ---
+function createExam() {
+    const title = document.getElementById("examTitle").value.trim();
+    const duration = parseInt(document.getElementById("duration").value);
+    const latex = document.getElementById("latex").value.trim();
+
+    if (!title || !latex) return alert("Vui lòng điền đầy đủ tiêu đề và nội dung!");
+
+    try {
+        const questions = parseLatex(latex);
+        if (questions.length === 0) {
+            alert("Không tìm thấy câu hỏi nào! Kiểm tra lại cú pháp LaTeX.");
+        } else {
+            exam = { title: title, duration: duration, questions: questions };
+            showPreview(questions);
+        }
+    } catch (e) {
+        alert("Lỗi phân tích LaTeX: " + e.message);
+    }
+}
+
+function parseLatex(text) {
+    const questions = [];
+    // Tách câu hỏi bằng từ khóa \question
+    const parts = text.split("\\question").filter(p => p.trim());
+
+    parts.forEach((part, index) => {
+        const lines = part.split("\n").map(l => l.trim()).filter(l => l);
+        if (lines.length) {
+            const qText = lines[0]; // Dòng đầu là câu hỏi
+            const choices = [];
+            let correct = -1;
+
+            // Các dòng sau là đáp án
+            lines.slice(1).forEach(line => {
+                if (line.startsWith("\\choice")) {
+                    choices.push(line.replace("\\choice", "").trim());
+                } else if (line.startsWith("\\CorrectChoice")) {
+                    correct = choices.length;
+                    choices.push(line.replace("\\CorrectChoice", "").trim());
+                }
+            });
+
+            if (qText && choices.length > 0 && correct !== -1) {
+                questions.push({
+                    id: index + 1,
+                    question: qText,
+                    choices: choices,
+                    correctAnswer: correct
+                });
+            }
+        }
+    });
+    return questions;
+}
+
+function showPreview(questions) {
+    const previewBox = document.getElementById("previewBox");
+    previewBox.innerHTML = "";
+
+    questions.forEach((q, i) => {
+        const div = document.createElement("div");
+        div.className = "question-preview";
+        
+        let html = `<div class="question-text">Câu ${i + 1}: ${q.question}</div>`;
+        q.choices.forEach((c, idx) => {
+            const isCorrect = idx === q.correctAnswer;
+            html += `<div class="choice-item ${isCorrect ? "correct-choice" : ""}">
+                        ${String.fromCharCode(65 + idx)}. ${c} ${isCorrect ? "✓" : ""}
+                     </div>`;
+        });
+        
+        div.innerHTML = html;
+        previewBox.appendChild(div);
+    });
+
+    document.getElementById("preview").classList.remove("hidden");
+}
+
+async function saveExam() {
+    if (!exam) return;
+    
+    // Tạo mã đề ngẫu nhiên 6 ký tự
+    const code = Math.random().toString(36).substr(2, 6).toUpperCase();
+    
+    const examData = {
+        ...exam,
+        code: code,
+        created: new Date().toISOString(),
+        teacher: localStorage.getItem("teacher"),
+        active: true
+    };
+
+    if (db) {
+        try {
+            await db.ref("exams/" + code).set(examData);
+            alert("✅ Đã lưu lên Firebase!");
+        } catch (e) {
+            return alert("Lỗi khi lưu: " + e.message);
+        }
+    } else {
+        // Lưu offline
+        const localExams = JSON.parse(localStorage.getItem("exams") || "{}");
+        localExams[code] = examData;
+        localStorage.setItem("exams", JSON.stringify(localExams));
+    }
+
+    document.getElementById("code").textContent = code;
+    document.getElementById("codeBox").classList.remove("hidden");
+    loadActive();
+}
+
+function copyCode() {
+    const code = document.getElementById("code").textContent;
+    navigator.clipboard.writeText(code).then(() => alert("Đã copy mã: " + code));
+}
+
+// --- QUẢN LÝ ĐỀ THI ---
+function loadActive() {
+    const activeList = document.getElementById("activeList");
+    
+    if (db) {
+        db.ref("exams").orderByChild("active").equalTo(true).once("value", (snap) => {
+            displayActive(snap.val() || {}, activeList);
+        });
+    } else {
+        const exams = JSON.parse(localStorage.getItem("exams") || "{}");
+        const activeExams = {};
+        Object.keys(exams).forEach(k => {
+            if (exams[k].active) activeExams[k] = exams[k];
+        });
+        displayActive(activeExams, activeList);
+    }
+}
+
+function displayActive(exams, container) {
+    if (Object.keys(exams).length === 0) {
+        return container.innerHTML = '<p class="hint">Chưa có đề thi nào đang mở.</p>';
+    }
+
+    let html = `
+        <table style="width:100%;border-collapse:collapse;">
+            <tr style="background:#f8f9fa;">
+                <th style="padding:10px;border:1px solid #ddd;">Mã</th>
+                <th style="padding:10px;border:1px solid #ddd;">Tên đề</th>
+                <th style="padding:10px;border:1px solid #ddd;">Thời gian</th>
+                <th style="padding:10px;border:1px solid #ddd;">Số câu</th>
+                <th style="padding:10px;border:1px solid #ddd;">Thao tác</th>
+            </tr>`;
+
+    Object.keys(exams).forEach(key => {
+        const ex = exams[key];
+        html += `
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;"><strong>${key}</strong></td>
+                <td style="padding:10px;border:1px solid #ddd;">${ex.title}</td>
+                <td style="padding:10px;border:1px solid #ddd;">${ex.duration} phút</td>
+                <td style="padding:10px;border:1px solid #ddd;">${ex.questions.length} câu</td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    <button onclick="deactivate('${key}')" class="btn-delete">Tắt Đề</button>
+                </td>
+            </tr>`;
+    });
+
+    html += "</table>";
+    container.innerHTML = html;
+}
+
+async function deactivate(code) {
+    if (!confirm("Học sinh sẽ không thể vào thi đề này nữa. Tiếp tục?")) return;
+
+    if (db) {
+        await db.ref("exams/" + code + "/active").set(false);
+    } else {
+        const exams = JSON.parse(localStorage.getItem("exams") || "{}");
+        if (exams[code]) exams[code].active = false;
+        localStorage.setItem("exams", JSON.stringify(exams));
+    }
+    loadActive();
+    alert("Đã tắt đề thi!");
+}
+
+// --- KẾT QUẢ ---
+function loadResults() {
+    if (db) {
+        listener = db.ref("results");
+        listener.on("value", (snap) => {
+            results = Object.values(snap.val() || {});
+            displayResults();
+        });
+    } else {
+        results = JSON.parse(localStorage.getItem("results") || "[]");
+        displayResults();
+        // Giả lập realtime
+        setInterval(() => {
+            results = JSON.parse(localStorage.getItem("results") || "[]");
+            displayResults();
+        }, 5000);
+    }
+}
+
+function displayResults() {
+    const container = document.getElementById("resultsList");
+    if (results.length === 0) {
+        return container.innerHTML = '<p class="hint">Chưa có học sinh nộp bài.</p>';
+    }
+
+    let html = `
+        <table style="width:100%;border-collapse:collapse;">
+            <tr style="background:#f8f9fa;">
+                <th style="padding:10px;border:1px solid #ddd;">Họ Tên</th>
+                <th style="padding:10px;border:1px solid #ddd;">Mã Đề</th>
+                <th style="padding:10px;border:1px solid #ddd;">Điểm</th>
+                <th style="padding:10px;border:1px solid #ddd;">Thời gian nộp</th>
+                <th style="padding:10px;border:1px solid #ddd;">Tab</th>
+                <th style="padding:10px;border:1px solid #ddd;">Xóa</th>
+            </tr>`;
+
+    results.forEach((r, index) => {
+        html += `
+            <tr>
+                <td style="padding:10px;border:1px solid #ddd;">${r.name}</td>
+                <td style="padding:10px;border:1px solid #ddd;">${r.code}</td>
+                <td style="padding:10px;border:1px solid #ddd;"><strong>${r.score}/10</strong></td>
+                <td style="padding:10px;border:1px solid #ddd;">${new Date(r.time).toLocaleString("vi-VN")}</td>
+                <td style="padding:10px;border:1px solid #ddd;">${r.tabSwitch ? "⚠️" : "✓"}</td>
+                <td style="padding:10px;border:1px solid #ddd;">
+                    <button onclick="deleteResult('${r.id || index}')" class="btn-delete">🗑️</button>
+                </td>
+            </tr>`;
+    });
+
+    html += "</table>";
+    container.innerHTML = html;
+}
+
+async function deleteResult(id) {
+    if (!confirm("Xóa kết quả này?")) return;
+    
+    if (db) {
+        await db.ref("results/" + id).remove();
+    } else {
+        results = results.filter((r, i) => (r.id || i) != id);
+        localStorage.setItem("results", JSON.stringify(results));
+        displayResults();
+    }
+}
+
+async function clearResults() {
+    if (!confirm("⚠️ CẢNH BÁO: Xóa TOÀN BỘ kết quả?")) return;
+    if (!confirm("Bạn có chắc chắn không? Hành động này không thể hoàn tác.")) return;
+
+    if (db) {
+        await db.ref("results").remove();
+    } else {
+        localStorage.setItem("results", "[]");
+        results = [];
+        displayResults();
+    }
+    alert("Đã xóa sạch dữ liệu!");
+}
+
+function refresh() {
+    loadResults();
+}
+
+function downloadExcel() {
+    if (results.length === 0) return alert("Chưa có kết quả để tải!");
+
+    // 1. Sheet Kết Quả Chi Tiết
+    const data = results.map((r, i) => ({
+        "STT": i + 1,
+        "Họ tên": r.name,
+        "Mã đề": r.code,
+        "Tên đề": r.examTitle || "",
+        "Điểm": r.score,
+        "Số câu đúng": r.correct || 0,
+        "Tổng câu": r.total || 0,
+        "Tỷ lệ %": r.total ? ((r.correct / r.total) * 100).toFixed(1) : 0,
+        "Chuyển Tab": r.tabSwitch ? "Có (Vi phạm)" : "Không",
+        "Thời gian nộp": new Date(r.time).toLocaleString("vi-VN")
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Chỉnh độ rộng cột
+    ws['!cols'] = [
+        { wch: 5 }, { wch: 25 }, { wch: 12 }, { wch: 30 }, 
+        { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 15 }, { wch: 20 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Kết Quả Thi");
+
+    // 2. Sheet Thống Kê
+    const scores = results.map(r => Number(r.score));
+    const avg = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
+    
+    const stats = [
+        { "Chỉ số": "Tổng số học sinh", "Giá trị": results.length },
+        { "Chỉ số": "Điểm Trung Bình", "Giá trị": avg },
+        { "Chỉ số": "Điểm Cao nhất", "Giá trị": Math.max(...scores) },
+        { "Chỉ số": "Điểm Thấp nhất", "Giá trị": Math.min(...scores) },
+        { "Chỉ số": "Giỏi (>=8)", "Giá trị": scores.filter(s => s >= 8).length },
+        { "Chỉ số": "Khá (>=6.5)", "Giá trị": scores.filter(s => s >= 6.5 && s < 8).length },
+        { "Chỉ số": "Trung Bình (>=5)", "Giá trị": scores.filter(s => s >= 5 && s < 6.5).length },
+        { "Chỉ số": "Yếu (<5)", "Giá trị": scores.filter(s => s < 5).length },
+        { "Chỉ số": "Vi phạm quy chế (Tab)", "Giá trị": results.filter(r => r.tabSwitch).length }
+    ];
+
+    const wsStats = XLSX.utils.json_to_sheet(stats);
+    wsStats['!cols'] = [{ wch: 25 }, { wch: 10 }];
+    XLSX.utils.book_append_sheet(wb, wsStats, "Thống Kê");
+
+    // Xuất file
+    const date = new Date();
+    const fileName = `KetQua_Thi_${date.getDate()}${date.getMonth()+1}_${date.getHours()}h${date.getMinutes()}.xlsx`;
+    
+    XLSX.writeFile(wb, fileName);
+    alert("✅ Đã tải file: " + fileName);
+}
+
+// --- KHỞI TẠO KHI TẢI TRANG ---
+window.addEventListener("load", () => {
+    // Kiểm tra xem đã lưu cấu hình chưa
+    const savedConfig = localStorage.getItem("fbConfig");
+    
+    if (savedConfig) {
+        try {
+            const config = JSON.parse(savedConfig);
+            if (!firebase.apps.length) {
+                firebase.initializeApp(config);
+            }
+            db = firebase.database();
+            
+            // Ẩn form cấu hình, hiện form đăng nhập
+            document.getElementById("configSection").classList.add("hidden");
+            
+            // Lắng nghe kết nối lại
+            db.ref(".info/connected").on("value", (snap) => {
+                updateStatus(snap.val());
+            });
+
+            // Nếu giáo viên đã đăng nhập trước đó
+            const savedTeacher = localStorage.getItem("teacher");
+            if (savedTeacher) {
+                document.getElementById("loginSection").classList.add("hidden");
+                document.getElementById("mainSection").classList.remove("hidden");
+                loadActive();
+                loadResults();
+            } else {
+                document.getElementById("loginSection").classList.remove("hidden");
+            }
+
+        } catch (e) {
+            console.error("Lỗi khởi tạo auto:", e);
+            // Nếu lỗi config cũ, bắt nhập lại
+            localStorage.removeItem("fbConfig");
+            document.getElementById("configSection").classList.remove("hidden");
+        }
+    } else {
+        // Chưa cấu hình -> Hiện form cấu hình
+        document.getElementById("configSection").classList.remove("hidden");
+    }
+});
