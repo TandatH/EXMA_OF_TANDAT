@@ -53,6 +53,205 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <script src="student-firebase.js"></script>
+    <script>
+        // ==========================================
+        // 1. ĐIỀN THÔNG TIN CỦA BẠN VÀO ĐÂY (QUAN TRỌNG)
+        // ==========================================
+        const config = {
+            apiKey: "AIzaSyADniEL6bbqGpa1a4O_k1Q0w5GRW5cfWjY",        // Ví dụ: "AIzaSyD..."
+            databaseURL: "https://exam-project-4ef04-default-rtdb.firebaseio.com",     // Ví dụ: "https://...firebaseio.com"
+            projectId: exam-project-4ef04"           // Ví dụ: "exam-system-123"
+        };
+        // ==========================================
+
+        let db = null;
+        let examData = null;
+        let studentName = "";
+        let examCode = "";
+        let timerInterval = null;
+        let userAnswers = {};
+
+        // TỰ ĐỘNG KẾT NỐI NGAY KHI MỞ TRANG
+        try {
+            // Xử lý link database nếu thừa dấu /
+            if (config.databaseURL.endsWith("/")) config.databaseURL = config.databaseURL.slice(0, -1);
+            
+            // Thêm authDomain để tránh lỗi
+            config.authDomain = config.projectId + ".firebaseapp.com";
+
+            if (!firebase.apps.length) firebase.initializeApp(config);
+            db = firebase.database();
+            
+            // Kiểm tra kết nối
+            const statusNode = document.getElementById("status");
+            db.ref(".info/connected").on("value", (snap) => {
+                if (snap.val() === true) {
+                    if(statusNode) statusNode.textContent = "🟢 Đã kết nối máy chủ";
+                } else {
+                    if(statusNode) statusNode.textContent = "⏳ Đang dò tìm máy chủ...";
+                }
+            });
+
+        } catch (e) {
+            alert("Lỗi Cấu Hình: " + e.message);
+        }
+
+        // --- CHỨC NĂNG 1: ĐĂNG NHẬP ---
+        async function login() {
+            studentName = document.getElementById("name").value.trim();
+            examCode = document.getElementById("code").value.trim().toUpperCase(); // Tự viết hoa mã
+
+            if (!studentName || !examCode) {
+                return alert("Vui lòng nhập Tên và Mã đề thi!");
+            }
+
+            // Tìm đề thi trên Firebase
+            try {
+                const snapshot = await db.ref("exams/" + examCode).once("value");
+                const data = snapshot.val();
+
+                if (!data) {
+                    alert("❌ Mã đề thi không tồn tại!");
+                    return;
+                }
+
+                if (!data.active) {
+                    alert("⛔ Đề thi này đã bị Giáo viên đóng!");
+                    return;
+                }
+
+                // Thành công -> Hiện thông tin đề
+                examData = data;
+                document.getElementById("loginSection").classList.add("hidden");
+                document.getElementById("waitingSection").classList.remove("hidden");
+                
+                document.getElementById("welcome").textContent = "Chào " + studentName + "!";
+                document.getElementById("title").textContent = data.title;
+                document.getElementById("duration").textContent = data.duration;
+                document.getElementById("count").textContent = data.questions.length + " câu";
+
+            } catch (error) {
+                alert("Lỗi đăng nhập: " + error.message);
+            }
+        }
+
+        // --- CHỨC NĂNG 2: BẮT ĐẦU LÀM BÀI ---
+        function start() {
+            document.getElementById("waitingSection").classList.add("hidden");
+            document.getElementById("examSection").classList.remove("hidden");
+            document.getElementById("titleTop").textContent = examData.title;
+
+            // Hiển thị câu hỏi
+            renderQuestions();
+
+            // Bắt đầu đếm ngược
+            let timeLeft = examData.duration * 60; // Đổi ra giây
+            updateTimerDisplay(timeLeft);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("⏰ HẾT GIỜ! Hệ thống sẽ tự nộp bài.");
+                    submit(true); // true = nộp do hết giờ
+                }
+            }, 1000);
+
+            // Bắt sự kiện chuyển Tab (Chống gian lận)
+            document.addEventListener("visibilitychange", () => {
+                if (document.hidden) {
+                    document.getElementById("warning").classList.remove("hidden");
+                    // Bạn có thể bỏ comment dòng dưới nếu muốn nộp bài luôn khi chuyển tab
+                    // submit(true); 
+                }
+            });
+        }
+
+        function updateTimerDisplay(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById("timer").textContent = `${m}:${s}`;
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById("questions");
+            container.innerHTML = "";
+
+            examData.questions.forEach((q, index) => {
+                // Tạo khung câu hỏi
+                const div = document.createElement("div");
+                div.className = "question-box"; // CSS class giả định
+                div.style.marginBottom = "20px";
+                div.style.padding = "15px";
+                div.style.background = "#f9f9f9";
+                div.style.borderRadius = "8px";
+
+                let html = `<div><strong>Câu ${index + 1}:</strong> ${q.question}</div>`;
+                
+                // Tạo các lựa chọn
+                q.choices.forEach((choice, cIndex) => {
+                    const choiceId = `q${index}_c${cIndex}`;
+                    html += `
+                        <div style="margin-top: 8px;">
+                            <input type="radio" name="q${index}" id="${choiceId}" value="${cIndex}" onchange="selectAnswer(${index}, ${cIndex})">
+                            <label for="${choiceId}" style="cursor:pointer; margin-left: 5px;">
+                                ${String.fromCharCode(65 + cIndex)}. ${choice}
+                            </label>
+                        </div>
+                    `;
+                });
+
+                div.innerHTML = html;
+                container.appendChild(div);
+            });
+        }
+
+        function selectAnswer(qIndex, cIndex) {
+            userAnswers[qIndex] = cIndex;
+        }
+
+        // --- CHỨC NĂNG 3: NỘP BÀI ---
+        async function submit(autoSubmit = false) {
+            if (!autoSubmit && !confirm("Bạn chắc chắn muốn nộp bài?")) return;
+
+            clearInterval(timerInterval);
+
+            // Tính điểm
+            let correctCount = 0;
+            examData.questions.forEach((q, index) => {
+                if (userAnswers[index] === q.correctAnswer) {
+                    correctCount++;
+                }
+            });
+
+            const total = examData.questions.length;
+            const score = (correctCount / total * 10).toFixed(1);
+
+            // Gửi kết quả lên Firebase
+            const resultData = {
+                name: studentName,
+                code: examCode,
+                score: score,
+                correct: correctCount,
+                total: total,
+                examTitle: examData.title,
+                time: Date.now(),
+                tabSwitch: !document.getElementById("warning").classList.contains("hidden")
+            };
+
+            await db.ref("results").push(resultData);
+
+            // Hiển thị kết quả
+            document.getElementById("examSection").classList.add("hidden");
+            document.getElementById("resultSection").classList.remove("hidden");
+            
+            document.getElementById("score").textContent = score;
+            document.getElementById("resultName").textContent = studentName;
+            document.getElementById("correct").textContent = correctCount;
+            document.getElementById("total").textContent = total;
+            document.getElementById("msg").textContent = autoSubmit ? "⚠️ Đã tự động nộp bài!" : "✅ Nộp bài thành công!";
+        }
+    </script>
 </body>
 </html>
