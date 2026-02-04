@@ -4,80 +4,305 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giáo Viên - Quản Lý Thi Pro</title>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <style>
+        :root {
+            --primary: #6366f1; /* Màu tím hiện đại */
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1e293b;
+            --light: #f1f5f9;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: #334155;
+        }
+
+        /* --- UI COMPONENT --- */
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .header-card {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-card h1 { margin: 0; font-size: 1.5rem; }
+
         .hidden { display: none !important; }
-        .card { max-width: 800px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; color: white; font-weight: bold; margin: 5px; }
-        .btn-primary { background: #007bff; }
-        .btn-success { background: #28a745; }
-        .btn-danger { background: #dc3545; }
-        .btn-secondary { background: #6c757d; }
-        input, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: #f8f9fa; }
+
+        /* BUTTONS */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-secondary { background: #94a3b8; color: white; }
+        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; }
+
+        /* INPUTS */
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+        /* EDITOR 2 CỘT */
+        .editor-container {
+            display: flex;
+            gap: 20px;
+            height: 550px;
+            margin-top: 15px;
+        }
+        .editor-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .toolbar {
+            padding: 10px 15px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .toolbar-title { font-size: 0.85rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        #inputArea {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            outline: none;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        #inputArea[contenteditable]:empty::before {
+            content: "👉 Bước 1: Copy đề từ Word dán vào đây.\n👉 Bước 2: Bấm 'Thêm Ảnh' để chèn hình.\n👉 Lưu ý: Đáp án đúng phải được TÔ ĐỎ trong Word.";
+            color: #94a3b8;
+            white-space: pre-wrap;
+        }
+        #inputArea img {
+            max-width: 150px;
+            border-radius: 8px;
+            border: 2px dashed var(--primary);
+            margin: 5px 0;
+            display: block;
+        }
+
+        #examInput {
+            flex: 1;
+            padding: 15px;
+            background: #1e1e1e;
+            color: #a5b4fc;
+            border: none;
+            resize: none;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        /* PREVIEW BOX */
+        .preview-item {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 50px;
+        }
+        .preview-badge {
+            position: absolute;
+            top: 15px;
+            left: 10px;
+            background: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .preview-content img { max-width: 100%; border-radius: 6px; margin-top: 10px; }
+        .correct-ans-preview { color: var(--success); font-weight: bold; }
+
+        /* TABLE */
+        .modern-table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden; }
+        .modern-table th { background: #f1f5f9; color: #475569; font-weight: 600; text-align: left; padding: 12px; }
+        .modern-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+        .modern-table tr:last-child td { border-bottom: none; }
+        .status-badge { padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+        .status-open { background: #dcfce7; color: #166534; }
+        .status-closed { background: #fee2e2; color: #991b1b; }
+
+        /* LOADING */
+        .loading-overlay {
+            position: fixed; top:0; left:0; right:0; bottom:0;
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid var(--primary);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body>
+
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 10px; font-weight: 600; color: var(--primary);">Đang xử lý...</p>
+    </div>
+
     <div class="container">
-        
-        <div style="text-align: center; padding: 10px;">
-            <span id="sysStatus" style="font-weight: bold; color: red;">🔴 Đang kết nối...</span>
+        <div id="statusHeader" style="text-align: center; margin-bottom: 10px; font-size: 0.9rem;">
+            <span id="sysStatus" style="color: #64748b;">🔄 Đang kết nối...</span>
         </div>
 
-        <div id="configSection" class="card hidden">
-            <h1>⚙️ Cấu Hình Firebase</h1>
-            <p>Đang tự động kết nối...</p>
+        <div id="loginSection" class="card hidden" style="max-width: 400px; margin: 50px auto; text-align: center;">
+            <h2 style="color: var(--primary);">🔐 Đăng Nhập Giáo Viên</h2>
+            <p style="color: #64748b; font-size: 0.9rem;">Hệ thống quản lý thi trực tuyến</p>
+            <input type="text" id="teacherName" placeholder="Tên đăng nhập (admin)" style="text-align: center; font-size: 1rem;">
+            <button onclick="login()" class="btn btn-primary" style="width: 100%; justify-content: center;">Truy Cập Hệ Thống</button>
         </div>
 
-        <div id="loginSection" class="card hidden">
-            <h1>Đăng Nhập Admin</h1>
-            <input type="text" id="teacherName" placeholder="Tên đăng nhập (Mặc định: admin)">
-            <button onclick="login()" class="btn btn-primary">Đăng Nhập</button>
-        </div>
-
-        <div id="mainSection" class="card hidden">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h1>Quản Lý Thi <span id="indicator">🟢</span></h1>
-                <button onclick="logout()" class="btn btn-secondary">Đăng Xuất</button>
+        <div id="mainSection" class="hidden">
+            
+            <div class="card header-card">
+                <div>
+                    <h1>Bảng Điều Khiển</h1>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Xin chào, <span id="welcomeName">Giáo viên</span></div>
+                </div>
+                <button onclick="logout()" class="btn btn-outline">Đăng Xuất</button>
             </div>
 
-            <h3>📝 Tạo Đề Mới</h3>
-            <input type="text" id="examTitle" placeholder="Tên đề thi (VD: Kiểm tra 15 phút)">
-            <input type="number" id="duration" value="45" placeholder="Thời gian (phút)">
-            <textarea id="latex" rows="8" placeholder="\question 1+1=?&#10;\choice 1&#10;\CorrectChoice 2&#10;\choice 3"></textarea>
-            <button onclick="createExam()" class="btn btn-primary">Xem Trước & Tạo Đề</button>
+            <div class="card">
+                <h3 style="display: flex; align-items: center; gap: 10px; margin-top: 0;">
+                    📝 Soạn Thảo Đề Thi
+                    <span style="font-size: 0.8rem; font-weight: normal; color: #64748b; margin-left: auto;">Hỗ trợ Word & Ảnh</span>
+                </h3>
 
-            <div id="preview" class="hidden" style="margin-top: 20px; border: 1px solid #ddd; padding: 10px;">
-                <h2>Xem Trước</h2>
-                <div id="previewBox"></div>
-                <br>
-                <button onclick="saveExam()" class="btn btn-success">✅ LƯU & LẤY MÃ</button>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="examTitle" placeholder="Nhập tên bài thi (VD: Kiểm tra 1 tiết Toán)" style="flex: 3;">
+                    <input type="number" id="duration" value="45" placeholder="Phút" style="flex: 1;">
+                </div>
+
+                <div class="editor-container">
+                    <div class="editor-col">
+                        <div class="toolbar">
+                            <span class="toolbar-title">Nội Dung (Word)</span>
+                            <div>
+                                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                                <button class="btn btn-primary" style="padding: 5px 12px; font-size: 0.8rem;" onclick="document.getElementById('fileInput').click()">
+                                    📷 Thêm Ảnh
+                                </button>
+                            </div>
+                        </div>
+                        <div id="inputArea" contenteditable="true" oninput="debounceConversion()"></div>
+                    </div>
+
+                    <div class="editor-col">
+                        <div class="toolbar">
+                            <span class="toolbar-title">Mã Nguồn (Tự Động)</span>
+                            <button class="btn btn-success" style="padding: 5px 12px; font-size: 0.8rem;" onclick="processConversion()">🔄 Cập nhật</button>
+                        </div>
+                        <textarea id="examInput" readonly placeholder="Code sẽ tự động sinh ra tại đây..."></textarea>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; text-align: right;">
+                    <button onclick="createExam()" class="btn btn-primary">👁️ Xem Trước & Tạo Đề</button>
+                </div>
             </div>
 
-            <div id="codeBox" class="hidden" style="background: #e3f2fd; padding: 15px; margin-top: 15px; text-align: center; border-radius: 8px;">
-                <h2>MÃ ĐỀ THI: <span id="code" style="color: blue; font-size: 24px;">...</span></h2>
-                <button onclick="copy()" class="btn btn-secondary btn-sm">Copy Mã</button>
+            <div id="previewSection" class="card hidden" style="border: 2px solid var(--primary);">
+                <h3 style="color: var(--primary);">👁️ Xem Trước Đề Thi</h3>
+                <div id="previewBox" style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f8fafc; border-radius: 8px;"></div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <button onclick="saveExam()" class="btn btn-success" style="font-size: 1.1rem; padding: 12px 30px;">🚀 LƯU ĐỀ LÊN SERVER</button>
+                    <button onclick="document.getElementById('previewSection').classList.add('hidden')" class="btn btn-secondary">Hủy</button>
+                </div>
             </div>
 
-            <hr style="margin: 30px 0;">
-
-            <h3>📂 Đề Đang Mở</h3>
-            <div id="activeList"></div>
-
-            <hr style="margin: 30px 0;">
-
-            <h3>📊 Kết Quả Học Sinh</h3>
-            <div style="margin-bottom: 15px;">
-                <button onclick="downloadExcel()" class="btn btn-success">📥 Xuất Excel (Kèm Thống Kê)</button>
-                <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa Tất Cả</button>
-                <button onclick="refresh()" class="btn btn-secondary">🔄 Làm mới</button>
+            <div id="codeBox" class="card hidden" style="background: #e0e7ff; border: 1px solid #c7d2fe; text-align: center;">
+                <h2 style="color: var(--primary); margin: 0;">🎉 TẠO THÀNH CÔNG!</h2>
+                <div style="margin: 15px 0;">
+                    MÃ ĐỀ THI: <span id="code" style="font-size: 2rem; font-weight: bold; color: #4338ca; background: white; padding: 5px 20px; border-radius: 8px; border: 2px dashed #4338ca;">ABC123</span>
+                </div>
+                <button onclick="copy()" class="btn btn-primary">Sao chép Mã</button>
             </div>
-            <div id="resultsList">
-                <p>Chưa có bài nộp nào...</p>
+
+            <div class="card">
+                <h3>📂 Danh Sách Đề Đang Mở</h3>
+                <div id="activeList">Đang tải dữ liệu...</div>
             </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>📊 Kết Quả Thi (Real-time)</h3>
+                    <div>
+                        <button onclick="downloadExcel()" class="btn btn-success">📥 Xuất Excel</button>
+                        <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa All</button>
+                    </div>
+                </div>
+                <div id="resultsList" style="margin-top: 15px;">
+                    <p style="color: #64748b;">Chưa có bài nộp nào...</p>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -85,21 +310,178 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // ======================================================
-        // 🔴 ĐIỀN THÔNG TIN FIREBASE CỦA BẠN VÀO ĐÂY:
-        // ======================================================
+        // ===========================================
+        // 🔴 CẤU HÌNH FIREBASE
+        // ===========================================
         const config = {
             apiKey: "AIzaSyADniEL6bbqGpa1a4O_k1Q0w5GRW5cfWjY", 
             databaseURL: "https://exam-project-4ef04-default-rtdb.firebaseio.com", 
             projectId: "exam-project-4ef04"
         };
-        // ======================================================
+        const CLOUD_NAME = "dpvh5ksdr";
+        const UPLOAD_PRESET = "web_thi";
 
         let db = null;
         let exam = null;
         let results = [];
+        let conversionTimeout;
 
-        // 1. KẾT NỐI
+        // --- 1. LOGIC UPLOAD ẢNH (GIỮ NGUYÊN) ---
+        async function handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            document.getElementById('loading').style.display = 'flex';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+
+            try {
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+                    method: 'POST', body: formData
+                });
+                const data = await res.json();
+                if (data.secure_url) {
+                    insertImageAtCursor(data.secure_url);
+                } else {
+                    alert('Lỗi: ' + (data.error?.message || 'Upload thất bại'));
+                }
+            } catch (e) {
+                alert('Lỗi kết nối upload ảnh!');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                input.value = '';
+            }
+        }
+
+        function insertImageAtCursor(url) {
+            const img = document.createElement('img');
+            img.src = url;
+            img.setAttribute('data-cloud-url', url);
+            const sel = window.getSelection();
+            const inputArea = document.getElementById('inputArea');
+            if (sel.rangeCount > 0 && inputArea.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+                const range = sel.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(img);
+                range.collapse(false);
+            } else {
+                inputArea.appendChild(img);
+            }
+            processConversion();
+        }
+
+        // --- 2. LOGIC XỬ LÝ WORD & MÀU ĐỎ (QUAN TRỌNG ĐÃ FIX) ---
+        function debounceConversion() {
+            clearTimeout(conversionTimeout);
+            conversionTimeout = setTimeout(processConversion, 1000);
+        }
+
+        // Hàm kiểm tra màu đỏ - "Đào sâu" mọi ngóc ngách của thẻ HTML
+        function checkColorIsRedRecursive(node) {
+            // 1. Kiểm tra node hiện tại (nếu là Element)
+            if (node.nodeType === 1) {
+                const style = node.style;
+                const computed = window.getComputedStyle(node);
+                
+                // Check style inline hoặc computed
+                if (isRed(style.color) || isRed(computed.color)) return true;
+                
+                // Check thẻ <font color="red"> (Word cũ hay dùng)
+                if (node.tagName === 'FONT' && node.getAttribute('color') === 'red') return true;
+                if (node.getAttribute('color') === '#ff0000') return true;
+            }
+
+            // 2. Nếu là Text Node, kiểm tra cha nó
+            if (node.nodeType === 3 && node.parentNode) {
+                 const parent = node.parentNode;
+                 if (parent.nodeType === 1) {
+                     const pStyle = window.getComputedStyle(parent);
+                     if (isRed(pStyle.color) || isRed(parent.style.color)) return true;
+                 }
+            }
+
+            // 3. Đệ quy con cái (Tìm xem bên trong có thẻ con nào màu đỏ không)
+            if (node.childNodes && node.childNodes.length > 0) {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    if (checkColorIsRedRecursive(node.childNodes[i])) return true;
+                }
+            }
+            return false;
+        }
+
+        // Helper: Định nghĩa thế nào là màu đỏ
+        function isRed(colorStr) {
+            if (!colorStr) return false;
+            if (colorStr === 'red') return true;
+            if (colorStr.includes('#ff0000') || colorStr.includes('#FF0000')) return true;
+            // Check RGB: red > 200, green & blue < 100
+            const match = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+            if (match) {
+                const [r, g, b] = [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+                return (r > 200 && g < 100 && b < 100);
+            }
+            return false;
+        }
+
+        function processConversion() {
+            const inputArea = document.getElementById('inputArea');
+            // Dùng childNodes để duyệt từng dòng/đoạn
+            const nodes = inputArea.childNodes;
+            let result = "";
+            let questionBuffer = "";
+            
+            const regexAnswerStart = /^([A-D])[\.\)]\s*/i;
+            const regexQuestionNumber = /^(Câu\s+\d+[:.]|Bài\s+\d+[:.]|\d+[\.:])\s*/i;
+
+            for (let i = 0; i < nodes.length; i++) {
+                let node = nodes[i];
+                let rawText = node.textContent || "";
+                let cleanText = rawText.replace(/[\r\n\t]+/g, " ").replace(/\s\s+/g, " ").trim();
+                
+                // Lấy ảnh
+                let imgCode = "";
+                if (node.nodeType === 1) {
+                    let imgs = node.tagName === 'IMG' ? [node] : node.querySelectorAll('img');
+                    imgs.forEach(img => {
+                        const url = img.getAttribute('data-cloud-url') || img.src;
+                        imgCode += `<br><img src="${url}" class="exam-image" style="max-width:100%; display:block; margin:10px auto;" /><br>`;
+                    });
+                }
+
+                if (!cleanText && !imgCode) continue;
+
+                if (regexAnswerStart.test(cleanText)) {
+                    // --- PHÁT HIỆN ĐÁP ÁN ---
+                    if (questionBuffer.length > 0) {
+                        result += `\n\\question ${questionBuffer.trim()}\n`;
+                        questionBuffer = "";
+                    }
+                    
+                    let match = cleanText.match(regexAnswerStart);
+                    let content = cleanText.substring(match[0].length).trim();
+                    
+                    // 🔥 KIỂM TRA MÀU ĐỎ Ở ĐÂY 🔥
+                    // Kiểm tra node hiện tại, và cả node con bên trong
+                    if (checkColorIsRedRecursive(node)) {
+                        result += `\\CorrectChoice ${content}\n`;
+                    } else {
+                        result += `\\choice ${content}\n`;
+                    }
+
+                } else {
+                    // --- LÀ CÂU HỎI ---
+                    cleanText = cleanText.replace(regexQuestionNumber, ""); // Xóa "Câu 1:"
+                    if (cleanText) questionBuffer += " " + cleanText;
+                    if (imgCode) questionBuffer += imgCode;
+                }
+            }
+            
+            if (questionBuffer.length > 0) result += `\n\\question ${questionBuffer.trim()}\n`;
+            document.getElementById('examInput').value = result.trim();
+        }
+
+        // --- 3. LOGIC FIREBASE & APP (GIỮ NGUYÊN) ---
         window.onload = function() {
             try {
                 if (config.databaseURL.endsWith("/")) config.databaseURL = config.databaseURL.slice(0, -1);
@@ -108,55 +490,55 @@
                 db = firebase.database();
 
                 db.ref(".info/connected").on("value", (snap) => {
-                    const sysStatus = document.getElementById("sysStatus");
+                    const st = document.getElementById("sysStatus");
                     if (snap.val() === true) {
-                        sysStatus.textContent = "🟢 Đã kết nối máy chủ";
-                        sysStatus.style.color = "green";
+                        st.innerHTML = "🟢 Đã kết nối máy chủ";
+                        st.style.color = "var(--success)";
                         if(localStorage.getItem("teacherLog")) {
                             document.getElementById("loginSection").classList.add("hidden");
                             document.getElementById("mainSection").classList.remove("hidden");
+                            document.getElementById("welcomeName").innerText = localStorage.getItem("teacherLog");
                             loadActiveExams();
                             loadResults();
                         } else {
                             document.getElementById("loginSection").classList.remove("hidden");
                         }
                     } else {
-                        sysStatus.textContent = "🔴 Mất kết nối mạng...";
-                        sysStatus.style.color = "red";
+                        st.innerHTML = "🔴 Mất kết nối...";
+                        st.style.color = "var(--danger)";
                     }
                 });
-            } catch (e) { alert("⚠️ Lỗi cấu hình API Key!"); }
+            } catch (e) { alert("Lỗi Config!"); }
         };
 
-        // 2. LOGIC CƠ BẢN
         function login() {
             const name = document.getElementById("teacherName").value.trim();
             if (name) {
                 localStorage.setItem("teacherLog", name);
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("mainSection").classList.remove("hidden");
+                document.getElementById("welcomeName").innerText = name;
                 loadActiveExams();
                 loadResults();
-            } else alert("Nhập tên đăng nhập!");
+            } else alert("Vui lòng nhập tên!");
         }
-
         function logout() { localStorage.removeItem("teacherLog"); location.reload(); }
-        function refresh() { location.reload(); }
-        function copy() { navigator.clipboard.writeText(document.getElementById("code").textContent); alert("Đã copy!"); }
+        function copy() { navigator.clipboard.writeText(document.getElementById("code").textContent); alert("Đã copy mã!"); }
 
-        // 3. TẠO ĐỀ
         function createExam() {
+            processConversion(); 
             const title = document.getElementById("examTitle").value;
             const duration = document.getElementById("duration").value;
-            const text = document.getElementById("latex").value;
-            if (!title || !text) return alert("Thiếu thông tin!");
+            const text = document.getElementById("examInput").value;
+
+            if (!title || !text) return alert("Thiếu tên đề hoặc nội dung!");
 
             const questions = [];
             const parts = text.split("\\question");
             parts.forEach(part => {
                 if(!part.trim()) return;
                 const lines = part.split("\n").filter(l => l.trim());
-                const qText = lines[0];
+                const qText = lines[0]; 
                 const choices = [];
                 let correct = -1;
                 lines.slice(1).forEach(line => {
@@ -166,12 +548,31 @@
                 if (choices.length > 0) questions.push({ question: qText, choices: choices, correctAnswer: correct });
             });
 
-            if (questions.length === 0) return alert("Không tìm thấy câu hỏi!");
+            if (questions.length === 0) return alert("Không tìm thấy câu hỏi! (Kiểm tra lại xem đã Enter xuống dòng giữa các câu chưa)");
             exam = { title, duration: parseInt(duration), questions, active: true, createdAt: Date.now() };
 
             const previewBox = document.getElementById("previewBox");
-            previewBox.innerHTML = questions.map((q, i) => `<div><b>Câu ${i+1}:</b> ${q.question}</div>`).join("<hr>");
-            document.getElementById("preview").classList.remove("hidden");
+            // Hiển thị Preview
+            previewBox.innerHTML = questions.map((q, i) => {
+                // Đánh dấu đáp án đúng trong preview
+                const choicesHtml = q.choices.map((c, idx) => 
+                    `<div style="${idx === q.correctAnswer ? 'color:green; font-weight:bold;' : ''}">${String.fromCharCode(65+idx)}. ${c} ${idx === q.correctAnswer ? '✅' : ''}</div>`
+                ).join("");
+
+                return `
+                <div class="preview-item">
+                    <div class="preview-badge">${i+1}</div>
+                    <div class="preview-content">
+                        <strong>${q.question}</strong>
+                        <div style="margin-top:5px; margin-left: 10px;">
+                            ${choicesHtml}
+                        </div>
+                    </div>
+                </div>`;
+            }).join("");
+            
+            document.getElementById("previewSection").classList.remove("hidden");
+            document.getElementById("previewSection").scrollIntoView({behavior: "smooth"});
         }
 
         function saveExam() {
@@ -180,8 +581,8 @@
             exam.code = code;
             db.ref("exams/" + code).set(exam).then(() => {
                 document.getElementById("code").textContent = code;
+                document.getElementById("previewSection").classList.add("hidden");
                 document.getElementById("codeBox").classList.remove("hidden");
-                alert("✅ Mã đề: " + code);
                 loadActiveExams();
             });
         }
@@ -190,13 +591,27 @@
             db.ref("exams").orderByChild("active").equalTo(true).on("value", snap => {
                 const list = document.getElementById("activeList");
                 const data = snap.val() || {};
-                list.innerHTML = Object.keys(data).length === 0 ? "<p>Không có đề nào.</p>" : 
-                Object.keys(data).map(k => `<div style="border-bottom:1px solid #eee; padding:5px; display:flex; justify-content:space-between;"><span><b>${k}</b> - ${data[k].title}</span><button class="btn-delete" onclick="closeExam('${k}')">Đóng</button></div>`).join("");
+                if(Object.keys(data).length === 0) {
+                    list.innerHTML = "<p>Không có đề nào đang mở.</p>";
+                    return;
+                }
+                
+                let html = `<table class="modern-table"><thead><tr><th>Mã</th><th>Tên Đề</th><th>Trạng Thái</th><th>Hành Động</th></tr></thead><tbody>`;
+                Object.keys(data).forEach(k => {
+                    html += `
+                        <tr>
+                            <td><strong>${k}</strong></td>
+                            <td>${data[k].title}</td>
+                            <td><span class="status-badge status-open">Đang mở</span></td>
+                            <td><button class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="closeExam('${k}')">Đóng Đề</button></td>
+                        </tr>
+                    `;
+                });
+                list.innerHTML = html + "</tbody></table>";
             });
         }
-        function closeExam(code) { if(confirm("Đóng đề này?")) db.ref("exams/" + code + "/active").set(false); }
+        function closeExam(code) { if(confirm("Bạn chắc chắn muốn đóng đề này? Học sinh sẽ không thể vào thi nữa.")) db.ref("exams/" + code + "/active").set(false); }
 
-        // 4. KẾT QUẢ
         function loadResults() {
             db.ref("results").on("value", snap => {
                 results = [];
@@ -206,77 +621,60 @@
                 Object.keys(data).forEach(k => results.push(data[k]));
                 results.sort((a, b) => b.timestamp - a.timestamp);
 
-                let html = `<table><tr style="background:#f2f2f2;"><th>Thời gian</th><th>Họ tên</th><th>Mã đề</th><th>Điểm</th><th>Trạng thái</th></tr>`;
+                let html = `<table class="modern-table">
+                    <thead><tr><th>Thời gian</th><th>Họ tên</th><th>Mã đề</th><th>Điểm</th><th>Trạng thái</th></tr></thead>
+                    <tbody>`;
                 results.forEach(r => {
-                    const status = r.tabSwitch ? '<span style="color:red; font-weight:bold;">⚠️ GIAN LẬN</span>' : '<span style="color:green;">Hợp lệ</span>';
-                    html += `<tr><td>${new Date(r.timestamp).toLocaleTimeString()}</td><td>${r.name}</td><td>${r.code}</td><td><b>${r.score}</b></td><td>${status}</td></tr>`;
+                    const isCheat = r.tabSwitch;
+                    html += `<tr>
+                        <td>${new Date(r.timestamp).toLocaleTimeString()}</td>
+                        <td>${r.name}</td>
+                        <td>${r.code}</td>
+                        <td style="font-weight:bold; color:${parseFloat(r.score) >= 5 ? 'var(--success)' : 'var(--danger)'}">${r.score}</td>
+                        <td>${isCheat ? '<span style="color:red">⚠️ Gian lận</span>' : '<span style="color:green">Hợp lệ</span>'}</td>
+                    </tr>`;
                 });
-                document.getElementById("resultsList").innerHTML = html + "</table>";
+                document.getElementById("resultsList").innerHTML = html + "</tbody></table>";
             });
         }
 
-        function clearResults() { if(confirm("Xóa hết kết quả?")) db.ref("results").remove(); }
+        function clearResults() { if(confirm("CẢNH BÁO: Xóa tất cả kết quả thi?")) db.ref("results").remove(); }
 
-        // 5. XUẤT EXCEL NÂNG CAO (2 SHEET)
         function downloadExcel() {
-            if (results.length === 0) return alert("Chưa có dữ liệu để xuất!");
-
-            // --- SHEET 1: CHI TIẾT ---
+            if (results.length === 0) return alert("Chưa có dữ liệu!");
+            
             const dataSheet1 = results.map((r, index) => ({
                 "STT": index + 1,
-                "Họ Tên": r.name,
+                "Họ và Tên": r.name,
                 "Mã Đề": r.code,
                 "Điểm Số": parseFloat(r.score),
                 "Số Câu Đúng": r.correct,
                 "Tổng Số Câu": r.total,
-                "Gian Lận": r.tabSwitch ? "CÓ" : "Không",
+                "Gian Lận (Rời tab)": r.tabSwitch ? "CÓ" : "Không",
                 "Thời Gian Nộp": new Date(r.timestamp).toLocaleString()
             }));
 
-            // --- SHEET 2: THỐNG KÊ ---
             const scores = results.map(r => parseFloat(r.score));
-            const totalStudents = scores.length;
-            const avgScore = (scores.reduce((a, b) => a + b, 0) / totalStudents).toFixed(2);
+            const avg = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
             
-            const countGioi = scores.filter(s => s >= 8).length;
-            const countKha = scores.filter(s => s >= 6.5 && s < 8).length;
-            const countTB = scores.filter(s => s >= 5 && s < 6.5).length;
-            const countYeu = scores.filter(s => s < 5).length;
-            const countGianLan = results.filter(r => r.tabSwitch).length;
-
             const dataSheet2 = [
-                { "Tiêu chí": "Tổng số học sinh", "Giá trị": totalStudents },
-                { "Tiêu chí": "Điểm trung bình", "Giá trị": avgScore },
-                { "Tiêu chí": "Điểm cao nhất", "Giá trị": Math.max(...scores) },
-                { "Tiêu chí": "Điểm thấp nhất", "Giá trị": Math.min(...scores) },
-                { "Tiêu chí": "", "Giá trị": "" }, // Dòng trống
-                { "Tiêu chí": "Giỏi (>= 8.0)", "Giá trị": `${countGioi} (${(countGioi/totalStudents*100).toFixed(1)}%)` },
-                { "Tiêu chí": "Khá (6.5 - 7.9)", "Giá trị": `${countKha} (${(countKha/totalStudents*100).toFixed(1)}%)` },
-                { "Tiêu chí": "Trung Bình (5.0 - 6.4)", "Giá trị": `${countTB} (${(countTB/totalStudents*100).toFixed(1)}%)` },
-                { "Tiêu chí": "Yếu (< 5.0)", "Giá trị": `${countYeu} (${(countYeu/totalStudents*100).toFixed(1)}%)` },
-                { "Tiêu chí": "", "Giá trị": "" },
-                { "Tiêu chí": "SỐ LƯỢNG GIAN LẬN", "Giá trị": countGianLan }
+                { "Thống Kê": "Tổng số học sinh", "Giá trị": scores.length },
+                { "Thống Kê": "Điểm trung bình", "Giá trị": avg },
+                { "Thống Kê": "Giỏi (>=8)", "Giá trị": scores.filter(s=>s>=8).length },
+                { "Thống Kê": "Yếu (<5)", "Giá trị": scores.filter(s=>s<5).length },
+                { "Thống Kê": "Gian lận", "Giá trị": results.filter(r=>r.tabSwitch).length }
             ];
 
-            // TẠO FILE EXCEL
             const wb = XLSX.utils.book_new();
-            
-            // Thêm Sheet 1
             const ws1 = XLSX.utils.json_to_sheet(dataSheet1);
-            // Chỉnh độ rộng cột Sheet 1
-            ws1['!cols'] = [{wch:5}, {wch:25}, {wch:10}, {wch:10}, {wch:12}, {wch:12}, {wch:10}, {wch:20}];
-            XLSX.utils.book_append_sheet(wb, ws1, "BangDiemChiTiet");
-
-            // Thêm Sheet 2
             const ws2 = XLSX.utils.json_to_sheet(dataSheet2);
-            // Chỉnh độ rộng cột Sheet 2
-            ws2['!cols'] = [{wch:25}, {wch:20}];
-            XLSX.utils.book_append_sheet(wb, ws2, "ThongKeTongQuat");
+            
+            ws1['!cols'] = [{wch:5}, {wch:25}, {wch:10}, {wch:10}, {wch:12}, {wch:12}, {wch:15}, {wch:22}];
+            ws2['!cols'] = [{wch:20}, {wch:15}];
 
-            // Xuất file
-            const date = new Date();
-            const fileName = `KetQuaThi_${date.getDate()}${date.getMonth()+1}_${date.getHours()}h${date.getMinutes()}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            XLSX.utils.book_append_sheet(wb, ws1, "BangDiem");
+            XLSX.utils.book_append_sheet(wb, ws2, "ThongKe");
+            XLSX.writeFile(wb, `KetQuaThi_${new Date().getTime()}.xlsx`);
         }
     </script>
 </body>
