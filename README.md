@@ -1,6 +1,6 @@
-# 🔥 Hệ Thống Thi Trực Tuyến Firebase
+# 🔥 Hệ Thống Thi Trực Tuyến 
 
-Hệ thống thi trực tuyến hỗ trợ **NHIỀU MÁY THI CÙNG LÚC** với Firebase Realtime Database.
+Hệ thống thi trực tuyến hỗ trợ **NHIỀU MÁY THI CÙNG LÚC** v
 
 ## ✨ Tính Năng
 
@@ -28,32 +28,48 @@ git clone https://github.com/tandath/KIEM_TRA_THI_EXAM.git
 - GV: Mở `teacher-firebase.html`
 - HS: Mở `student-firebase.html`
 
-## 📖 Hướng Dẫn Nhanh
+## ✨ TÍNH NĂNG NỔI BẬT
 
-### Giáo Viên:
-1. Cấu hình Firebase (1 lần, 10 phút)
-2. Tạo đề thi từ LaTeX
-3. Lấy mã (VD: ABC123)
-4. Chia sẻ với học sinh
+### 👨‍🏫 Dành Cho Giáo Viên
+- **Soạn đề siêu tốc:**
+  - Hỗ trợ copy trực tiếp từ **Microsoft Word**.
+  - Tự động nhận diện **Đáp án đúng được TÔ ĐỎ**.
+  - Hỗ trợ công thức Toán học (LaTeX) và chèn Hình ảnh.
+- **Quản lý thi Realtime:**
+  - Theo dõi tiến độ làm bài của cả lớp ngay trên màn hình.
+  - Biết ngay ai đang làm, ai đã nộp, điểm số bao nhiêu.
+- **Chống gian lận:** Hệ thống cảnh báo ngay lập tức nếu học sinh thoát màn hình hoặc chuyển tab.
+- **Báo cáo:** Xuất file Excel chi tiết điểm số và thống kê.
 
-### Học Sinh:
-1. Nhập mã đề thi
-2. Làm bài (KHÔNG chuyển tab!)
-3. Nộp bài
-4. Xem kết quả ngay
+### 👨‍🎓 Dành Cho Học Sinh
+- Giao diện thân thiện, dễ sử dụng trên cả Điện thoại và Máy tính.
+- Có đồng hồ đếm ngược.
+- Biết điểm ngay sau khi nộp bài.
+- Xem lại đáp án chi tiết (Đúng/Sai).
 
-### Ví dụ LaTeX:
-```latex
-\question 2 + 2 = ?
-\choice 3
-\CorrectChoice 4
-\choice 5
+1. Cách soạn đề thi (Mới & Tiện lợi)
+Bạn không cần gõ code! Chỉ cần soạn trên Word như sau:
 
-\question Thủ đô VN?
-\choice TP.HCM
-\CorrectChoice Hà Nội
-\choice Đà Nẵng
-```
+Viết câu hỏi bình thường.
+
+Các đáp án A, B, C, D nằm trên các dòng riêng biệt.
+
+Tô màu đỏ (Red) cho đáp án đúng.
+
+Copy toàn bộ nội dung từ Word -> Dán vào ô nhập liệu của Giáo viên.
+
+Ví dụ trong Word:
+
+Câu 1: Thủ đô của Việt Nam là gì? A. TP. Hồ Chí Minh <span style="color:red">B. Hà Nội</span> (Chữ này tô đỏ) C. Đà Nẵng D. Cần Thơ
+
+2. Quy trình tổ chức thi
+GV: Đăng nhập > Tạo đề > Nhận Mã Đề Thi (Ví dụ: ABC123).
+
+GV: Gửi mã ABC123 cho học sinh.
+
+HS: Truy cập trang web > Nhập tên & Mã đề > Bắt đầu làm.
+
+GV: Ngồi xem bảng kết quả nhảy số liên tục theo thời gian thực.
 
 ## 📊 Files
 
