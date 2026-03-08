@@ -9,10 +9,11 @@
     
     <style>
         :root {
-            --primary: #6366f1; /* Màu tím hiện đại */
+            --primary: #6366f1;
             --primary-dark: #4f46e5;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --dark: #1e293b;
             --light: #f1f5f9;
             --bg: #f8fafc;
@@ -26,17 +27,15 @@
             color: #334155;
         }
 
-        /* --- UI COMPONENT --- */
         .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
         
         .card {
             background: white;
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
             margin-bottom: 25px;
             border: 1px solid #e2e8f0;
-            transition: transform 0.2s;
         }
 
         .header-card {
@@ -69,9 +68,10 @@
         .btn-danger { background: var(--danger); color: white; }
         .btn-secondary { background: #94a3b8; color: white; }
         .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; }
+        .btn-warning { background: var(--warning); color: white; }
 
         /* INPUTS */
-        input, select {
+        input[type="text"], input[type="number"], select, textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #cbd5e1;
@@ -79,14 +79,108 @@
             margin-bottom: 10px;
             box-sizing: border-box;
             font-family: inherit;
+            font-size: 0.95rem;
         }
-        input:focus { outline: 2px solid var(--primary); border-color: transparent; }
+        input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
 
-        /* EDITOR 2 CỘT */
+        /* ===================== */
+        /* EXAM TYPE SELECTOR    */
+        /* ===================== */
+        .exam-type-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .exam-type-section h4 {
+            margin: 0 0 15px 0;
+            color: #475569;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .type-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .type-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            background: white;
+        }
+        .type-card:hover { border-color: var(--primary); background: #f0f0ff; }
+        .type-card.active { border-color: var(--primary); background: #ede9fe; }
+        .type-card .type-icon { font-size: 2rem; margin-bottom: 8px; }
+        .type-card .type-name { font-weight: 700; font-size: 0.9rem; color: #334155; }
+        .type-card .type-desc { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+
+        /* Môn học chips */
+        .subject-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .subject-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1.5px solid #cbd5e1;
+            background: white;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: #475569;
+        }
+        .subject-chip:hover { border-color: var(--primary); color: var(--primary); }
+        .subject-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Tỷ lệ trắc nghiệm/tự luận */
+        .ratio-section {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .ratio-section h5 { margin: 0 0 10px 0; color: #9a3412; font-size: 0.85rem; }
+        .ratio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .ratio-field label { font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 4px; }
+        .ratio-field input { margin-bottom: 0; }
+
+        /* GDPT 2018 Info Box */
+        .gdpt-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 15px;
+            font-size: 0.82rem;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+        }
+        .gdpt-info strong { display: block; margin-bottom: 6px; }
+        .gdpt-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #4f46e5;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+        }
+
+        /* EDITOR */
         .editor-container {
             display: flex;
             gap: 20px;
-            height: 550px;
+            height: 450px;
             margin-top: 15px;
         }
         .editor-col {
@@ -118,7 +212,7 @@
             line-height: 1.6;
         }
         #inputArea[contenteditable]:empty::before {
-            content: "👉 Bước 1: Copy đề từ Word dán vào đây.\n👉 Bước 2: Bấm 'Thêm Ảnh' để chèn hình.\n👉 Lưu ý: Đáp án đúng phải được TÔ ĐỎ trong Word.";
+            content: "👉 Dán nội dung câu hỏi từ Word vào đây.\n👉 Đáp án đúng: Tô màu ĐỎ trong Word.\n👉 Tự luận: Viết đề + thang điểm vào đây.";
             color: #94a3b8;
             white-space: pre-wrap;
         }
@@ -141,7 +235,20 @@
             font-size: 13px;
         }
 
-        /* PREVIEW BOX */
+        /* Essay input area */
+        #essayInputArea {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.7;
+        }
+        #essayInputArea::placeholder { color: #94a3b8; }
+
+        /* PREVIEW */
         .preview-item {
             background: #fff;
             border: 1px solid #e2e8f0;
@@ -166,17 +273,31 @@
             font-weight: bold;
             font-size: 12px;
         }
+        .preview-badge.essay-badge { background: var(--warning); }
         .preview-content img { max-width: 100%; border-radius: 6px; margin-top: 10px; }
         .correct-ans-preview { color: var(--success); font-weight: bold; }
+        .essay-preview-box {
+            background: #fffbeb;
+            border-left: 3px solid var(--warning);
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #78350f;
+        }
 
         /* TABLE */
         .modern-table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 8px; overflow: hidden; }
         .modern-table th { background: #f1f5f9; color: #475569; font-weight: 600; text-align: left; padding: 12px; }
-        .modern-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+        .modern-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155; vertical-align: middle; }
         .modern-table tr:last-child td { border-bottom: none; }
         .status-badge { padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
         .status-open { background: #dcfce7; color: #166534; }
         .status-closed { background: #fee2e2; color: #991b1b; }
+        .exam-type-badge { padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
+        .badge-mc { background: #dbeafe; color: #1e40af; }
+        .badge-essay { background: #fef3c7; color: #92400e; }
+        .badge-mixed { background: #f3e8ff; color: #6b21a8; }
 
         /* LOADING */
         .loading-overlay {
@@ -198,6 +319,46 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* TABS for mixed exam */
+        .section-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 10px;
+        }
+        .section-tab {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: transparent;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .section-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+
+        /* SCORING PANEL */
+        .scoring-panel {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .scoring-panel h5 { margin: 0 0 10px 0; color: #166534; font-size: 0.85rem; }
+        .score-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+        .score-row label { font-size: 0.8rem; color: #475569; min-width: 120px; font-weight: 600; }
+        .score-row input { margin-bottom: 0; flex: 1; }
+
     </style>
 </head>
 <body>
@@ -212,71 +373,265 @@
             <span id="sysStatus" style="color: #64748b;">🔄 Đang kết nối...</span>
         </div>
 
+        <!-- LOGIN -->
         <div id="loginSection" class="card hidden" style="max-width: 400px; margin: 50px auto; text-align: center;">
             <h2 style="color: var(--primary);">🔐 Đăng Nhập Giáo Viên</h2>
-            <p style="color: #64748b; font-size: 0.9rem;">Hệ thống quản lý thi trực tuyến</p>
+            <p style="color: #64748b; font-size: 0.9rem;">Hệ thống quản lý thi trực tuyến GDPT 2018</p>
             <input type="text" id="teacherName" placeholder="Tên đăng nhập (admin)" style="text-align: center; font-size: 1rem;">
             <button onclick="login()" class="btn btn-primary" style="width: 100%; justify-content: center;">Truy Cập Hệ Thống</button>
         </div>
 
         <div id="mainSection" class="hidden">
-            
+
+            <!-- HEADER -->
             <div class="card header-card">
                 <div>
-                    <h1>Bảng Điều Khiển</h1>
-                    <div style="font-size: 0.9rem; opacity: 0.9;">Xin chào, <span id="welcomeName">Giáo viên</span></div>
+                    <h1>📋 Bảng Điều Khiển</h1>
+                    <div style="font-size: 0.9rem; opacity: 0.9;">Xin chào, <span id="welcomeName">Giáo viên</span> · GDPT 2018</div>
                 </div>
                 <button onclick="logout()" class="btn btn-outline">Đăng Xuất</button>
             </div>
 
+            <!-- ========================== -->
+            <!-- SOẠN ĐỀ THI                -->
+            <!-- ========================== -->
             <div class="card">
                 <h3 style="display: flex; align-items: center; gap: 10px; margin-top: 0;">
                     📝 Soạn Thảo Đề Thi
-                    <span style="font-size: 0.8rem; font-weight: normal; color: #64748b; margin-left: auto;">Hỗ trợ Word & Ảnh</span>
+                    <span style="font-size: 0.8rem; font-weight: normal; color: #64748b; margin-left: auto;">Theo chương trình GDPT 2018</span>
                 </h3>
 
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="examTitle" placeholder="Nhập tên bài thi (VD: Kiểm tra 1 tiết Toán)" style="flex: 3;">
-                    <input type="number" id="duration" value="45" placeholder="Phút" style="flex: 1;">
+                <!-- Thông tin chung -->
+                <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px; margin-bottom: 0;">
+                    <input type="text" id="examTitle" placeholder="Tên bài thi (VD: Kiểm tra 1 tiết Toán 5 - Phân số)">
+                    <input type="number" id="duration" value="45" placeholder="Phút">
                 </div>
 
-                <div class="editor-container">
-                    <div class="editor-col">
-                        <div class="toolbar">
-                            <span class="toolbar-title">Nội Dung (Word)</span>
-                            <div>
-                                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
-                                <button class="btn btn-primary" style="padding: 5px 12px; font-size: 0.8rem;" onclick="document.getElementById('fileInput').click()">
-                                    📷 Thêm Ảnh
-                                </button>
-                            </div>
-                        </div>
-                        <div id="inputArea" contenteditable="true" oninput="debounceConversion()"></div>
+                <!-- CHỌN KHỐI + MÔN -->
+                <div class="exam-type-section" style="margin-top:10px;">
+                    <h4>🏫 Chọn Khối Lớp</h4>
+
+                    <!-- Cấp học tabs -->
+                    <div style="display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;">
+                        <button class="btn" id="levelBtn_tieuhoc" onclick="selectLevel('tieuhoc')"
+                            style="padding:6px 14px; font-size:0.82rem; background:#e0f2fe; color:#0369a1; border:2px solid #7dd3fc;">
+                            🏫 Tiểu học (1–5)
+                        </button>
+                        <button class="btn" id="levelBtn_thcs" onclick="selectLevel('thcs')"
+                            style="padding:6px 14px; font-size:0.82rem; background:white; color:#64748b; border:2px solid #e2e8f0;">
+                            🏫 THCS (6–9)
+                        </button>
+                        <button class="btn" id="levelBtn_thpt" onclick="selectLevel('thpt')"
+                            style="padding:6px 14px; font-size:0.82rem; background:white; color:#64748b; border:2px solid #e2e8f0;">
+                            🎓 THPT (10–12)
+                        </button>
                     </div>
 
-                    <div class="editor-col">
-                        <div class="toolbar">
-                            <span class="toolbar-title">Mã Nguồn (Tự Động)</span>
-                            <button class="btn btn-success" style="padding: 5px 12px; font-size: 0.8rem;" onclick="processConversion()">🔄 Cập nhật</button>
+                    <!-- Khối lớp chips -->
+                    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;" id="gradeChips">
+                        <!-- Render by JS -->
+                    </div>
+
+                    <h4 style="margin-top:4px;">📚 Môn học</h4>
+                    <div class="subject-row" id="subjectChips">
+                        <!-- Render by JS based on level -->
+                    </div>
+                    <div id="subjectGroupLabel" style="font-size:0.75rem; color:#64748b; margin-top:-5px; margin-bottom:8px;"></div>
+
+                    <!-- Node path preview -->
+                    <div id="nodePathBox" style="background:#f1f5f9; border-radius:8px; padding:9px 14px; font-size:0.8rem; color:#475569; margin-bottom:12px; display:none;">
+                        📁 Firebase node: <code id="nodePathText" style="background:#e2e8f0; padding:2px 7px; border-radius:4px; font-family:monospace; color:#4f46e5;"></code>
+                    </div>
+
+                    <!-- CHỌN LOẠI ĐỀ -->
+                    <h4 style="margin-top: 15px;">🗂️ Hình thức kiểm tra</h4>
+                    <div class="type-cards">
+                        <div class="type-card active" id="typeCard_mc" onclick="selectExamType('mc')">
+                            <div class="type-icon">📋</div>
+                            <div class="type-name">Trắc nghiệm</div>
+                            <div class="type-desc">100% trắc nghiệm<br>4 lựa chọn A-B-C-D</div>
                         </div>
-                        <textarea id="examInput" readonly placeholder="Code sẽ tự động sinh ra tại đây..."></textarea>
+                        <div class="type-card" id="typeCard_tf" onclick="selectExamType('tf')">
+                            <div class="type-icon">✅</div>
+                            <div class="type-name">TN + Đúng/Sai</div>
+                            <div class="type-desc">Trắc nghiệm + câu<br>Đúng/Sai (THPT 2025)</div>
+                        </div>
+                        <div class="type-card" id="typeCard_mixed" onclick="selectExamType('mixed')">
+                            <div class="type-icon">📝</div>
+                            <div class="type-name">TN + Tự luận</div>
+                            <div class="type-desc">TN làm online<br>Tự luận làm giấy</div>
+                        </div>
+                    </div>
+
+                    <!-- Khuyến nghị -->
+                    <div class="gdpt-info" id="gdptInfo">
+                        <strong>📌 Gợi ý:</strong>
+                        <span id="gdptHint">Chọn khối và môn học để xem gợi ý cấu trúc đề thi.</span>
+                    </div>
+
+                    <!-- Tỷ lệ (chỉ hiện khi mixed) -->
+                    <div class="ratio-section hidden" id="ratioSection">
+                        <h5>⚖️ Cấu trúc đề thi kết hợp</h5>
+                        <div class="ratio-grid">
+                            <div class="ratio-field">
+                                <label>Số câu trắc nghiệm</label>
+                                <input type="number" id="mcCount" value="28" min="1" max="60" placeholder="VD: 28">
+                            </div>
+                            <div class="ratio-field">
+                                <label>Điểm trắc nghiệm / 10</label>
+                                <input type="number" id="mcScore" value="7" min="1" max="9" step="0.5" placeholder="VD: 7">
+                            </div>
+                            <div class="ratio-field">
+                                <label>Số câu tự luận</label>
+                                <input type="number" id="essayCount" value="2" min="1" max="10" placeholder="VD: 2">
+                            </div>
+                            <div class="ratio-field">
+                                <label>Điểm tự luận / 10</label>
+                                <input type="number" id="essayScore" value="3" min="1" max="9" step="0.5" placeholder="VD: 3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EDITOR TRẮC NGHIỆM (mặc định) -->
+                <div id="editorMC">
+                    <div class="editor-container">
+                        <div class="editor-col">
+                            <div class="toolbar">
+                                <span class="toolbar-title">📄 Nội Dung (Dán từ Word)</span>
+                                <div>
+                                    <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                                    <button class="btn btn-primary" style="padding: 5px 12px; font-size: 0.8rem;" onclick="document.getElementById('fileInput').click()">
+                                        📷 Thêm Ảnh
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="inputArea" contenteditable="true" oninput="debounceConversion()"></div>
+                        </div>
+                        <div class="editor-col">
+                            <div class="toolbar">
+                                <span class="toolbar-title">⚙️ Mã LaTeX (Tự Động)</span>
+                                <button class="btn btn-success" style="padding: 5px 12px; font-size: 0.8rem;" onclick="processConversion()">🔄 Cập nhật</button>
+                            </div>
+                            <textarea id="examInput" readonly placeholder="Code sẽ tự động sinh ra tại đây..."></textarea>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 8px;">💡 Đáp án đúng: Tô màu <strong style="color:red">ĐỎ</strong> trong Word rồi dán vào đây.</p>
+                </div>
+
+                <!-- EDITOR ĐÚNG/SAI -->
+                <div id="editorTF" class="hidden">
+                    <div style="background:#e0f2fe; border:1px solid #7dd3fc; border-radius:10px; padding:12px; margin-bottom:12px; font-size:0.85rem; color:#0369a1;">
+                        <strong>📌 Cấu trúc câu Đúng/Sai (chuẩn THPT 2025):</strong><br>
+                        Mỗi câu có 4 ý (a, b, c, d). Học sinh chọn Đúng hoặc Sai cho từng ý.<br>
+                        <strong>Cách nhập:</strong> Dán từ Word. Tô màu <span style="color:red; font-weight:bold;">ĐỎ</span> các ý ĐÚNG. Ý không tô = SAI.
+                    </div>
+                    <div style="display:flex; gap:15px; align-items:flex-start; flex-wrap:wrap; margin-bottom:12px;">
+                        <div style="flex:1; min-width:280px;">
+                            <div style="font-size:0.8rem; font-weight:700; color:#64748b; text-transform:uppercase; padding:8px 12px; background:#f8fafc; border-radius:8px 8px 0 0; border:1px solid #e2e8f0; border-bottom:none;">📋 Phần Trắc Nghiệm (A-B-C-D)</div>
+                            <div class="editor-container" style="height:300px; margin-top:0;">
+                                <div class="editor-col" style="border-radius:0 0 12px 12px;">
+                                    <div class="toolbar"><span class="toolbar-title">📄 Nội dung TN (dán từ Word)</span></div>
+                                    <div id="inputAreaTF_mc" contenteditable="true" oninput="debounceConversionTF()" style="flex:1; padding:15px; overflow-y:auto; outline:none; font-size:14px; line-height:1.6;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:280px;">
+                            <div style="font-size:0.8rem; font-weight:700; color:#0369a1; text-transform:uppercase; padding:8px 12px; background:#e0f2fe; border-radius:8px 8px 0 0; border:1px solid #7dd3fc; border-bottom:none;">✅ Phần Đúng/Sai</div>
+                            <div class="editor-container" style="height:300px; margin-top:0;">
+                                <div class="editor-col" style="border-radius:0 0 12px 12px;">
+                                    <div class="toolbar"><span class="toolbar-title">📄 Nội dung Đúng/Sai (dán từ Word)</span></div>
+                                    <div id="inputAreaTF_tf" contenteditable="true" oninput="debounceConversionTF()" style="flex:1; padding:15px; overflow-y:auto; outline:none; font-size:14px; line-height:1.6;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin-bottom:8px;">
+                        <strong style="font-size:0.8rem; color:#166534;">⚖️ Phân bổ điểm:</strong>
+                        <div style="display:flex; gap:15px; margin-top:8px; flex-wrap:wrap;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="font-size:0.8rem; color:#475569; white-space:nowrap;">Điểm phần TN (A-D):</label>
+                                <input type="number" id="tfMcScore" value="6" min="0" max="10" step="0.5" style="width:70px; margin-bottom:0;">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <label style="font-size:0.8rem; color:#475569; white-space:nowrap;">Điểm phần Đúng/Sai:</label>
+                                <input type="number" id="tfTfScore" value="4" min="0" max="10" step="0.5" style="width:70px; margin-bottom:0;">
+                            </div>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">💡 Đáp án đúng: Tô màu <strong style="color:red">ĐỎ</strong> trong Word. Ý nào không tô = SAI.</p>
+                    <textarea id="examInputTF" style="display:none;"></textarea>
+                </div>
+
+                <!-- EDITOR HỖN HỢP (TN + Tự luận) -->
+                <div id="editorMixed" class="hidden">
+                    <div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:11px 14px; margin-bottom:12px; font-size:0.85rem; color:#9a3412;">
+                        <strong>📌 Lưu ý:</strong> Phần Trắc Nghiệm → học sinh làm online và nộp tự động. Phần Tự Luận → chỉ hiển thị đề cho học sinh đọc, <strong>làm trên giấy</strong>.
+                    </div>
+                    <div class="section-tabs">
+                        <button class="section-tab active" id="mixedTab_mc" onclick="switchMixedTab('mc')">📋 Phần TN (Online)</button>
+                        <button class="section-tab" id="mixedTab_essay" onclick="switchMixedTab('essay')">✍️ Phần Tự Luận (Giấy)</button>
+                    </div>
+                    <!-- MC part -->
+                    <div id="mixedMCArea">
+                        <div class="editor-container" style="height:380px;">
+                            <div class="editor-col">
+                                <div class="toolbar">
+                                    <span class="toolbar-title">📄 Phần I: Trắc Nghiệm</span>
+                                    <div>
+                                        <input type="file" id="fileInputMixed" accept="image/*" style="display: none;" onchange="handleImageUploadMixed(this)">
+                                        <button class="btn btn-primary" style="padding: 5px 12px; font-size: 0.8rem;" onclick="document.getElementById('fileInputMixed').click()">📷 Thêm Ảnh</button>
+                                    </div>
+                                </div>
+                                <div id="inputAreaMixed" contenteditable="true" oninput="debounceConversionMixed()" style="flex:1; padding:20px; overflow-y:auto; outline:none; font-size:15px; line-height:1.6;"></div>
+                            </div>
+                            <div class="editor-col">
+                                <div class="toolbar">
+                                    <span class="toolbar-title">⚙️ Mã LaTeX</span>
+                                    <button class="btn btn-success" style="padding: 5px 12px; font-size: 0.8rem;" onclick="processConversionMixed()">🔄 Cập nhật</button>
+                                </div>
+                                <textarea id="examInputMixed" readonly placeholder="Code tự động..."></textarea>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 8px;">💡 Đáp án đúng: Tô màu <strong style="color:red">ĐỎ</strong> trong Word rồi dán vào.</p>
+                    </div>
+                    <!-- Essay part -->
+                    <div id="mixedEssayArea" class="hidden">
+                        <div class="editor-container" style="height:380px;">
+                            <div class="editor-col">
+                                <div class="toolbar"><span class="toolbar-title">✍️ Phần II: Tự Luận</span></div>
+                                <div id="essayAreaMixed" contenteditable="true" style="flex:1; padding:20px; overflow-y:auto; outline:none; font-size:15px; line-height:1.7;"></div>
+                            </div>
+                            <div class="editor-col">
+                                <div class="toolbar"><span class="toolbar-title">📊 Đáp án & Thang Điểm</span></div>
+                                <div style="flex:1; padding:15px; overflow-y:auto;">
+                                    <div id="essayQuestionsPanelMixed"></div>
+                                    <button class="btn btn-warning" style="width:100%; justify-content:center; margin-top:10px;" onclick="addEssayQuestionMixed()">
+                                        ➕ Thêm Câu Tự Luận
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div style="margin-top: 20px; text-align: right;">
-                    <button onclick="createExam()" class="btn btn-primary">👁️ Xem Trước & Tạo Đề</button>
+                    <button onclick="createExam()" class="btn btn-primary" style="font-size: 1rem; padding: 12px 28px;">👁️ Xem Trước & Tạo Đề</button>
                 </div>
             </div>
 
+            <!-- PREVIEW -->
             <div id="previewSection" class="card hidden" style="border: 2px solid var(--primary);">
                 <h3 style="color: var(--primary);">👁️ Xem Trước Đề Thi</h3>
-                <div id="previewBox" style="max-height: 400px; overflow-y: auto; padding: 10px; background: #f8fafc; border-radius: 8px;"></div>
+                <div id="previewMeta" style="background:#f8fafc; border-radius:8px; padding: 12px; margin-bottom: 15px; font-size:0.9rem; color:#475569;"></div>
+                <div id="previewBox" style="max-height: 450px; overflow-y: auto; padding: 10px; background: #f8fafc; border-radius: 8px;"></div>
                 <div style="margin-top: 20px; text-align: center;">
                     <button onclick="saveExam()" class="btn btn-success" style="font-size: 1.1rem; padding: 12px 30px;">🚀 LƯU ĐỀ LÊN SERVER</button>
                     <button onclick="document.getElementById('previewSection').classList.add('hidden')" class="btn btn-secondary">Hủy</button>
                 </div>
             </div>
 
+            <!-- CODE BOX -->
             <div id="codeBox" class="card hidden" style="background: #e0e7ff; border: 1px solid #c7d2fe; text-align: center;">
                 <h2 style="color: var(--primary); margin: 0;">🎉 TẠO THÀNH CÔNG!</h2>
                 <div style="margin: 15px 0;">
@@ -285,15 +640,33 @@
                 <button onclick="copy()" class="btn btn-primary">Sao chép Mã</button>
             </div>
 
+            <!-- DANH SÁCH ĐỀ -->
             <div class="card">
-                <h3>📂 Danh Sách Đề Đang Mở</h3>
-                <div id="activeList">Đang tải dữ liệu...</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <h3 style="margin:0;">📂 Danh Sách Đề Đang Mở</h3>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <select id="filterLevel" onchange="onFilterChange()" style="padding:7px 10px; border:1px solid #cbd5e1; border-radius:7px; font-size:0.85rem; margin-bottom:0;">
+                            <option value="">Tất cả cấp</option>
+                            <option value="tieuhoc">Tiểu học (1–5)</option>
+                            <option value="thcs">THCS (6–9)</option>
+                            <option value="thpt">THPT (10–12)</option>
+                        </select>
+                        <select id="filterGrade" onchange="onFilterChange()" style="padding:7px 10px; border:1px solid #cbd5e1; border-radius:7px; font-size:0.85rem; margin-bottom:0;">
+                            <option value="">Tất cả khối</option>
+                        </select>
+                        <select id="filterSubject" onchange="onFilterChange()" style="padding:7px 10px; border:1px solid #cbd5e1; border-radius:7px; font-size:0.85rem; margin-bottom:0;">
+                            <option value="">Tất cả môn</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="activeList" style="margin-top:12px;">Đang tải dữ liệu...</div>
             </div>
 
+            <!-- KẾT QUẢ -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h3>📊 Kết Quả Thi (Real-time)</h3>
-                    <div>
+                    <div style="display:flex; gap:8px;">
                         <button onclick="downloadExcel()" class="btn btn-success">📥 Xuất Excel</button>
                         <button onclick="clearResults()" class="btn btn-danger">🗑️ Xóa All</button>
                     </div>
@@ -325,83 +698,341 @@
         let exam = null;
         let results = [];
         let conversionTimeout;
+        let conversionTimeoutMixed;
 
-        // --- 1. LOGIC UPLOAD ẢNH (GIỮ NGUYÊN) ---
-        async function handleImageUpload(input) {
+        // Trạng thái
+        let currentExamType = 'mc';
+        let currentSubject = '';
+        let currentGrade = '';      // '1'..'12'
+        let currentLevel = 'tieuhoc'; // 'tieuhoc'|'thcs'|'thpt'
+        let essayQuestions = [];
+        let essayQuestionsMixed = [];
+
+        // ============================================================
+        // 📚 DỮ LIỆU MÔN HỌC THEO CẤP
+        // ============================================================
+        const LEVEL_GRADES = {
+            tieuhoc: [1,2,3,4,5],
+            thcs:    [6,7,8,9],
+            thpt:    [10,11,12]
+        };
+
+        // Màu nhóm môn: [borderColor, textColor]
+        const SUBJECT_COLOR = {
+            core:  ['#6366f1','#4338ca'],
+            khtn:  ['#60a5fa','#1d4ed8'],
+            khxh:  ['#f97316','#c2410c'],
+            cn:    ['#a855f7','#7e22ce'],
+            other: ['#94a3b8','#475569']
+        };
+
+        const SUBJECTS_BY_LEVEL = {
+            tieuhoc: [
+                { key:'toan',       label:'Toán',              group:'core'  },
+                { key:'tieng-viet', label:'Tiếng Việt',        group:'core'  },
+                { key:'tieng-anh',  label:'Tiếng Anh',         group:'core'  },
+                { key:'khoa-hoc',   label:'Khoa học',          group:'khtn'  },
+                { key:'lich-su-dia-ly', label:'Lịch sử & Địa lý', group:'khxh' },
+                { key:'dao-duc',    label:'Đạo đức',           group:'khxh'  },
+                { key:'tin-hoc',    label:'Tin học',           group:'cn'    },
+                { key:'cong-nghe',  label:'Công nghệ',         group:'cn'    },
+                { key:'am-nhac',    label:'Âm nhạc',           group:'other' },
+                { key:'my-thuat',   label:'Mỹ thuật',          group:'other' },
+                { key:'the-duc',    label:'Thể dục',           group:'other' },
+            ],
+            thcs: [
+                { key:'toan',       label:'Toán',              group:'core'  },
+                { key:'ngu-van',    label:'Ngữ văn',           group:'core'  },
+                { key:'tieng-anh',  label:'Tiếng Anh',         group:'core'  },
+                { key:'vat-ly',     label:'Vật lý',            group:'khtn'  },
+                { key:'hoa-hoc',    label:'Hóa học',           group:'khtn'  },
+                { key:'sinh-hoc',   label:'Sinh học',          group:'khtn'  },
+                { key:'khtn',       label:'KHTN (tích hợp)',   group:'khtn'  },
+                { key:'lich-su',    label:'Lịch sử',           group:'khxh'  },
+                { key:'dia-ly',     label:'Địa lý',            group:'khxh'  },
+                { key:'lich-su-dia-ly', label:'Lịch sử & Địa lý', group:'khxh' },
+                { key:'gdcd',       label:'GDCD',              group:'khxh'  },
+                { key:'tin-hoc',    label:'Tin học',           group:'cn'    },
+                { key:'cong-nghe',  label:'Công nghệ',         group:'cn'    },
+                { key:'am-nhac',    label:'Âm nhạc',           group:'other' },
+                { key:'my-thuat',   label:'Mỹ thuật',          group:'other' },
+                { key:'the-duc',    label:'Thể dục',           group:'other' },
+            ],
+            thpt: [
+                { key:'toan',       label:'Toán',              group:'core'  },
+                { key:'ngu-van',    label:'Ngữ văn',           group:'core'  },
+                { key:'ngoai-ngu',  label:'Ngoại ngữ',         group:'core'  },
+                { key:'vat-ly',     label:'Vật lý',            group:'khtn'  },
+                { key:'hoa-hoc',    label:'Hóa học',           group:'khtn'  },
+                { key:'sinh-hoc',   label:'Sinh học',          group:'khtn'  },
+                { key:'khtn',       label:'KHTN',              group:'khtn'  },
+                { key:'lich-su',    label:'Lịch sử',           group:'khxh'  },
+                { key:'dia-ly',     label:'Địa lý',            group:'khxh'  },
+                { key:'gdcd',       label:'GDCD/KTPL',         group:'khxh'  },
+                { key:'lich-su-dia-ly', label:'Lịch sử - Địa lý', group:'khxh' },
+                { key:'tin-hoc',    label:'Tin học',           group:'cn'    },
+                { key:'cong-nghe',  label:'Công nghệ',         group:'cn'    },
+            ]
+        };
+
+        // Gợi ý theo môn (đơn giản, dùng chung)
+        const SUBJECT_HINTS = {
+            'toan':        { mc:'TN thuần hoặc TN+TL tùy khối.', tf:'TN + Đúng/Sai phù hợp THPT 2025.', mixed:'Kết hợp TN (7đ) + TL (3đ).' },
+            'tieng-viet':  { mc:'TN đọc hiểu.', tf:'TN + Đúng/Sai câu đọc hiểu.', mixed:'TN đọc hiểu + TL viết đoạn văn.' },
+            'ngu-van':     { mc:'TN đọc hiểu + nhận biết.', tf:'TN + Đúng/Sai về văn bản.', mixed:'TN (3đ) + TL nghị luận (7đ).' },
+            'tieng-anh':   { mc:'TN 40–50 câu.', tf:'TN + Đúng/Sai đọc hiểu.', mixed:'TN (8đ) + Writing (2đ).' },
+            'ngoai-ngu':   { mc:'TN 40–50 câu.', tf:'TN + Đúng/Sai đọc hiểu.', mixed:'TN (8đ) + Writing (2đ).' },
+            'vat-ly':      { mc:'TN 40 câu.', tf:'TN + Đúng/Sai nhận định vật lý.', mixed:'TN (8đ) + TL (2đ).' },
+            'hoa-hoc':     { mc:'TN 40 câu.', tf:'TN + Đúng/Sai phương trình.', mixed:'TN (7đ) + TL (3đ).' },
+            'sinh-hoc':    { mc:'TN 40 câu.', tf:'TN + Đúng/Sai cơ chế.', mixed:'TN (8đ) + TL (2đ).' },
+            'khoa-hoc':    { mc:'TN quan sát hiện tượng.', tf:'TN + Đúng/Sai thực tế.', mixed:'TN (7đ) + TL (3đ).' },
+            'khtn':        { mc:'TN tích hợp 3 phân môn.', tf:'TN + Đúng/Sai tích hợp.', mixed:'TN (7đ) + TL (3đ).' },
+            'lich-su':     { mc:'TN 40 câu sự kiện.', tf:'TN + Đúng/Sai nhận định.', mixed:'TN (8đ) + TL phân tích (2đ).' },
+            'dia-ly':      { mc:'TN 40 câu.', tf:'TN + Đúng/Sai bản đồ, số liệu.', mixed:'TN (8đ) + TL vẽ biểu đồ (2đ).' },
+            'lich-su-dia-ly':{ mc:'TN tích hợp.', tf:'TN + Đúng/Sai liên môn.', mixed:'TN (7.5đ) + TL (2.5đ).' },
+            'gdcd':        { mc:'TN pháp luật, tình huống.', tf:'TN + Đúng/Sai tình huống.', mixed:'TN (5đ) + TL (5đ).' },
+            'tin-hoc':     { mc:'TN lý thuyết.', tf:'TN + Đúng/Sai lập trình.', mixed:'TN (6đ) + TL code (4đ).' },
+            'cong-nghe':   { mc:'TN lý thuyết.', tf:'TN + Đúng/Sai kỹ thuật.', mixed:'TN (5đ) + TL thiết kế (5đ).' },
+            'dao-duc':     { mc:'TN tình huống đạo đức.', tf:'TN + Đúng/Sai tình huống.', mixed:'TN (6đ) + TL (4đ).' },
+            'am-nhac':     { mc:'TN lý thuyết âm nhạc.', tf:'', mixed:'' },
+            'my-thuat':    { mc:'TN lý thuyết mỹ thuật.', tf:'', mixed:'' },
+            'the-duc':     { mc:'TN lý thuyết thể dục.', tf:'', mixed:'' },
+        };
+
+        // ============================================================
+        // 🔥 FIREBASE NODE PATH LOGIC
+        // exams/khoi_{grade}/{subject}/{code}
+        // ============================================================
+        function getFirebaseNode(grade, subject, code) {
+            const g = grade ? 'khoi_' + grade : 'khoi_unknown';
+            const s = subject || 'other';
+            return code ? `exams/${g}/${s}/${code}` : `exams/${g}/${s}`;
+        }
+
+        function updateNodePathUI() {
+            const box = document.getElementById('nodePathBox');
+            const txt = document.getElementById('nodePathText');
+            if (currentGrade && currentSubject) {
+                box.style.display = '';
+                txt.textContent = `exams/khoi_${currentGrade}/${currentSubject}/[mã đề]`;
+            } else {
+                box.style.display = 'none';
+            }
+        }
+
+        // ============================================================
+        // UI CONTROLS – LEVEL / GRADE / SUBJECT
+        // ============================================================
+        function selectLevel(level) {
+            currentLevel = level;
+            currentGrade = '';
+            currentSubject = '';
+
+            // Highlight level buttons
+            ['tieuhoc','thcs','thpt'].forEach(l => {
+                const btn = document.getElementById('levelBtn_' + l);
+                if (l === level) {
+                    btn.style.background = '#e0f2fe'; btn.style.color = '#0369a1'; btn.style.borderColor = '#7dd3fc';
+                } else {
+                    btn.style.background = 'white'; btn.style.color = '#64748b'; btn.style.borderColor = '#e2e8f0';
+                }
+            });
+
+            renderGradeChips();
+            renderSubjectChips();
+            updateNodePathUI();
+            updateGDPTHint();
+        }
+
+        function renderGradeChips() {
+            const container = document.getElementById('gradeChips');
+            const grades = LEVEL_GRADES[currentLevel] || [];
+            container.innerHTML = grades.map(g =>
+                `<span class="subject-chip" onclick="selectGrade(this, ${g})" 
+                    style="border-color:#6366f1; color:#4338ca; font-weight:700; min-width:40px; text-align:center;">
+                    Lớp ${g}
+                </span>`
+            ).join('');
+        }
+
+        function selectGrade(el, grade) {
+            currentGrade = String(grade);
+            document.querySelectorAll('#gradeChips .subject-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            updateNodePathUI();
+            updateGDPTHint();
+        }
+
+        function renderSubjectChips() {
+            const container = document.getElementById('subjectChips');
+            const subjects = SUBJECTS_BY_LEVEL[currentLevel] || [];
+            container.innerHTML = subjects.map(s => {
+                const [bc, tc] = SUBJECT_COLOR[s.group] || SUBJECT_COLOR.other;
+                return `<span class="subject-chip" onclick="selectSubject(this,'${s.key}')"
+                    style="border-color:${bc}; color:${tc};">${s.label}</span>`;
+            }).join('');
+        }
+
+        function selectSubject(el, key) {
+            document.querySelectorAll('#subjectChips .subject-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            currentSubject = key;
+            updateNodePathUI();
+            updateGDPTHint();
+        }
+
+        function selectExamType(type) {
+            currentExamType = type;
+            ['mc','tf','mixed'].forEach(t => {
+                const card = document.getElementById('typeCard_' + t);
+                if (card) card.classList.toggle('active', t === type);
+            });
+            document.getElementById('editorMC').classList.toggle('hidden', type !== 'mc');
+            document.getElementById('editorTF').classList.toggle('hidden', type !== 'tf');
+            document.getElementById('editorMixed').classList.toggle('hidden', type !== 'mixed');
+            document.getElementById('ratioSection').classList.toggle('hidden', type !== 'mixed');
+            updateGDPTHint();
+        }
+
+        function updateGDPTHint() {
+            const hintEl = document.getElementById('gdptHint');
+            const hint = SUBJECT_HINTS[currentSubject];
+            if (!hint) {
+                hintEl.textContent = 'Chọn khối và môn học để xem gợi ý.';
+                return;
+            }
+            const allSubjects = [...SUBJECTS_BY_LEVEL.tieuhoc, ...SUBJECTS_BY_LEVEL.thcs, ...SUBJECTS_BY_LEVEL.thpt];
+            const subjectInfo = allSubjects.find(s => s.key === currentSubject);
+            const label = subjectInfo ? subjectInfo.label : currentSubject;
+            const gradeText = currentGrade ? ` · Lớp ${currentGrade}` : '';
+            const typeText = hint[currentExamType] || 'Xem gợi ý khi chọn hình thức.';
+            hintEl.innerHTML = `<strong>${label}${gradeText}:</strong> ${typeText}`;
+        }
+
+        function switchMixedTab(tab) {
+            document.getElementById('mixedMCArea').classList.toggle('hidden', tab !== 'mc');
+            document.getElementById('mixedEssayArea').classList.toggle('hidden', tab !== 'essay');
+            document.getElementById('mixedTab_mc').classList.toggle('active', tab === 'mc');
+            document.getElementById('mixedTab_essay').classList.toggle('active', tab === 'essay');
+        }
+
+        // ============================================================
+        // ESSAY QUESTION BUILDER
+        // ============================================================
+        let essayQCounter = 0;
+
+        function addEssayQuestion(targetPanel = 'essayQuestionsPanel', targetArr = essayQuestions) {
+            essayQCounter++;
+            const id = 'eq_' + essayQCounter;
+            const panel = document.getElementById(targetPanel);
+            const div = document.createElement('div');
+            div.id = id;
+            div.style.cssText = 'background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:10px;';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="font-size:0.85rem; color:#6366f1;">Câu tự luận #${essayQCounter}</strong>
+                    <button onclick="removeEssayQ('${id}', '${targetArr === essayQuestions ? 'main' : 'mixed'}')" style="background:#fee2e2; border:none; color:#991b1b; padding:3px 8px; border-radius:5px; cursor:pointer; font-size:0.75rem;">✕ Xóa</button>
+                </div>
+                <input type="text" placeholder="Nội dung câu hỏi tự luận..." id="${id}_q" style="margin-bottom:6px;" />
+                <input type="text" placeholder="Hướng dẫn / Đáp án gợi ý..." id="${id}_a" style="margin-bottom:6px;" />
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <label style="font-size:0.8rem; color:#475569; white-space:nowrap;">Điểm tối đa:</label>
+                    <input type="number" value="1" min="0.5" step="0.5" id="${id}_s" style="width:80px; margin-bottom:0;" />
+                </div>
+            `;
+            panel.appendChild(div);
+            targetArr.push({ id, domId: id });
+        }
+
+        function addEssayQuestionMixed() {
+            addEssayQuestion('essayQuestionsPanelMixed', essayQuestionsMixed);
+        }
+
+        function removeEssayQ(domId, target) {
+            const el = document.getElementById(domId);
+            if (el) el.remove();
+            if (target === 'main') essayQuestions = essayQuestions.filter(q => q.domId !== domId);
+            else essayQuestionsMixed = essayQuestionsMixed.filter(q => q.domId !== domId);
+        }
+
+        function collectEssayData(arr) {
+            return arr.map(q => {
+                const qEl = document.getElementById(q.domId + '_q');
+                const aEl = document.getElementById(q.domId + '_a');
+                const sEl = document.getElementById(q.domId + '_s');
+                if (!qEl) return null;
+                return {
+                    question: qEl.value.trim(),
+                    answer: aEl ? aEl.value.trim() : '',
+                    maxScore: sEl ? parseFloat(sEl.value) : 1,
+                    type: 'essay'
+                };
+            }).filter(q => q && q.question);
+        }
+
+        // ============================================================
+        // IMAGE UPLOAD
+        // ============================================================
+        async function handleImageUpload(input) { await uploadImage(input, 'inputArea'); }
+        async function handleImageUploadEssay(input) { await uploadImage(input, 'essayArea'); }
+        async function handleImageUploadMixed(input) { await uploadImage(input, 'inputAreaMixed'); }
+
+        async function uploadImage(input, targetId) {
             const file = input.files[0];
             if (!file) return;
-
             document.getElementById('loading').style.display = 'flex';
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', UPLOAD_PRESET);
-
             try {
-                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                    method: 'POST', body: formData
-                });
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
                 const data = await res.json();
-                if (data.secure_url) {
-                    insertImageAtCursor(data.secure_url);
-                } else {
-                    alert('Lỗi: ' + (data.error?.message || 'Upload thất bại'));
-                }
-            } catch (e) {
-                alert('Lỗi kết nối upload ảnh!');
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-                input.value = '';
-            }
+                if (data.secure_url) insertImageAtCursor(data.secure_url, targetId);
+                else alert('Lỗi: ' + (data.error?.message || 'Upload thất bại'));
+            } catch (e) { alert('Lỗi kết nối upload ảnh!'); }
+            finally { document.getElementById('loading').style.display = 'none'; input.value = ''; }
         }
 
-        function insertImageAtCursor(url) {
+        function insertImageAtCursor(url, targetId = 'inputArea') {
             const img = document.createElement('img');
             img.src = url;
             img.setAttribute('data-cloud-url', url);
+            img.style.cssText = 'max-width:150px; border-radius:8px; border:2px dashed #6366f1; margin:5px 0; display:block;';
+            const target = document.getElementById(targetId);
             const sel = window.getSelection();
-            const inputArea = document.getElementById('inputArea');
-            if (sel.rangeCount > 0 && inputArea.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+            if (sel.rangeCount > 0 && target.contains(sel.getRangeAt(0).commonAncestorContainer)) {
                 const range = sel.getRangeAt(0);
                 range.deleteContents();
                 range.insertNode(img);
                 range.collapse(false);
             } else {
-                inputArea.appendChild(img);
+                target.appendChild(img);
             }
-            processConversion();
+            if (targetId === 'inputArea') processConversion();
+            if (targetId === 'inputAreaMixed') processConversionMixed();
         }
 
-        // --- 2. LOGIC XỬ LÝ WORD & MÀU ĐỎ (QUAN TRỌNG ĐÃ FIX) ---
-        function debounceConversion() {
-            clearTimeout(conversionTimeout);
-            conversionTimeout = setTimeout(processConversion, 1000);
-        }
+        // ============================================================
+        // LATEX CONVERSION (trắc nghiệm)
+        // ============================================================
+        function debounceConversion() { clearTimeout(conversionTimeout); conversionTimeout = setTimeout(processConversion, 1000); }
+        function debounceConversionMixed() { clearTimeout(conversionTimeoutMixed); conversionTimeoutMixed = setTimeout(processConversionMixed, 1000); }
 
-        // Hàm kiểm tra màu đỏ - "Đào sâu" mọi ngóc ngách của thẻ HTML
         function checkColorIsRedRecursive(node) {
-            // 1. Kiểm tra node hiện tại (nếu là Element)
             if (node.nodeType === 1) {
                 const style = node.style;
                 const computed = window.getComputedStyle(node);
-                
-                // Check style inline hoặc computed
                 if (isRed(style.color) || isRed(computed.color)) return true;
-                
-                // Check thẻ <font color="red"> (Word cũ hay dùng)
                 if (node.tagName === 'FONT' && node.getAttribute('color') === 'red') return true;
                 if (node.getAttribute('color') === '#ff0000') return true;
             }
-
-            // 2. Nếu là Text Node, kiểm tra cha nó
             if (node.nodeType === 3 && node.parentNode) {
-                 const parent = node.parentNode;
-                 if (parent.nodeType === 1) {
-                     const pStyle = window.getComputedStyle(parent);
-                     if (isRed(pStyle.color) || isRed(parent.style.color)) return true;
-                 }
+                const parent = node.parentNode;
+                if (parent.nodeType === 1) {
+                    const pStyle = window.getComputedStyle(parent);
+                    if (isRed(pStyle.color) || isRed(parent.style.color)) return true;
+                }
             }
-
-            // 3. Đệ quy con cái (Tìm xem bên trong có thẻ con nào màu đỏ không)
             if (node.childNodes && node.childNodes.length > 0) {
                 for (let i = 0; i < node.childNodes.length; i++) {
                     if (checkColorIsRedRecursive(node.childNodes[i])) return true;
@@ -410,12 +1041,10 @@
             return false;
         }
 
-        // Helper: Định nghĩa thế nào là màu đỏ
         function isRed(colorStr) {
             if (!colorStr) return false;
             if (colorStr === 'red') return true;
             if (colorStr.includes('#ff0000') || colorStr.includes('#FF0000')) return true;
-            // Check RGB: red > 200, green & blue < 100
             const match = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
             if (match) {
                 const [r, g, b] = [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
@@ -424,77 +1053,517 @@
             return false;
         }
 
-        function processConversion() {
-            const inputArea = document.getElementById('inputArea');
-            // Dùng childNodes để duyệt từng dòng/đoạn
-            const nodes = inputArea.childNodes;
+        // Tách contenteditable thành danh sách dòng [{text, isRed}]
+        // isRed = true chỉ khi TOÀN BỘ text của dòng đó có màu đỏ
+        function extractLines(areaEl) {
+            const lines = [];
+            const BLOCK = new Set(['P','DIV','LI','H1','H2','H3','H4','H5','H6','TR','TD']);
+
+            // Đẩy 1 dòng mới trống vào stack
+            function newLine() { lines.push({ text: '', redChars: 0, totalChars: 0 }); }
+            function curLine() { if (!lines.length) newLine(); return lines[lines.length-1]; }
+
+            function walk(node) {
+                if (node.nodeType === 3) { // text node
+                    const t = node.textContent.replace(/[\r\n]+/g,' ');
+                    if (!t.trim()) return;
+                    // Kiểm tra màu tại text node này
+                    const isRed = checkColorIsRedRecursive(node);
+                    const cl = curLine();
+                    cl.text += t;
+                    cl.totalChars += t.trim().length;
+                    if (isRed) cl.redChars += t.trim().length;
+                } else if (node.nodeType === 1) {
+                    const tag = node.tagName.toUpperCase();
+                    if (tag === 'BR') { newLine(); return; }
+                    if (tag === 'IMG') {
+                        const url = node.getAttribute('data-cloud-url') || node.src;
+                        curLine().text += `<img src="${url}" style="max-width:100%;display:block;margin:10px auto;"/>`;
+                        return;
+                    }
+                    // Block element → tạo dòng mới trước và sau
+                    if (BLOCK.has(tag) && curLine().text.trim()) newLine();
+                    for (const child of node.childNodes) walk(child);
+                    if (BLOCK.has(tag) && curLine().text.trim()) newLine();
+                }
+            }
+
+            for (const child of areaEl.childNodes) walk(child);
+
+            // Chuyển đổi: isRed = true khi phần lớn ký tự trong dòng là đỏ
+            return lines
+                .map(l => ({ text: l.text.replace(/\s\s+/g,' ').trim(), isRed: l.totalChars > 0 && l.redChars / l.totalChars > 0.5 }))
+                .filter(l => l.text);
+        }
+
+        function convertAreaToLatex(areaId, outputId) {
+            const inputArea = document.getElementById(areaId);
+            const lines = extractLines(inputArea);
+
             let result = "";
             let questionBuffer = "";
-            
-            const regexAnswerStart = /^([A-D])[\.\)]\s*/i;
-            const regexQuestionNumber = /^(Câu\s+\d+[:.]|Bài\s+\d+[:.]|\d+[\.:])\s*/i;
+            const regexAnswerStart   = /^([A-D])[\.\)]\s*/i;
+            const regexQuestionNumber = /^(Câu\s*\d+[\.:]?\s*|Bài\s*\d+[\.:]?\s*|\d+[\.]\s*)/i;
 
-            for (let i = 0; i < nodes.length; i++) {
-                let node = nodes[i];
-                let rawText = node.textContent || "";
-                let cleanText = rawText.replace(/[\r\n\t]+/g, " ").replace(/\s\s+/g, " ").trim();
-                
-                // Lấy ảnh
-                let imgCode = "";
-                if (node.nodeType === 1) {
-                    let imgs = node.tagName === 'IMG' ? [node] : node.querySelectorAll('img');
-                    imgs.forEach(img => {
-                        const url = img.getAttribute('data-cloud-url') || img.src;
-                        imgCode += `<br><img src="${url}" class="exam-image" style="max-width:100%; display:block; margin:10px auto;" /><br>`;
-                    });
-                }
+            for (const line of lines) {
+                const raw = line.text.replace(/\s\s+/g,' ').trim();
+                if (!raw) continue;
 
-                if (!cleanText && !imgCode) continue;
-
-                if (regexAnswerStart.test(cleanText)) {
-                    // --- PHÁT HIỆN ĐÁP ÁN ---
-                    if (questionBuffer.length > 0) {
+                if (regexAnswerStart.test(raw)) {
+                    // Flush câu hỏi còn đang buffer
+                    if (questionBuffer.trim()) {
                         result += `\n\\question ${questionBuffer.trim()}\n`;
                         questionBuffer = "";
                     }
-                    
-                    let match = cleanText.match(regexAnswerStart);
-                    let content = cleanText.substring(match[0].length).trim();
-                    
-                    // 🔥 KIỂM TRA MÀU ĐỎ Ở ĐÂY 🔥
-                    // Kiểm tra node hiện tại, và cả node con bên trong
-                    if (checkColorIsRedRecursive(node)) {
-                        result += `\\CorrectChoice ${content}\n`;
-                    } else {
-                        result += `\\choice ${content}\n`;
-                    }
-
+                    const match = raw.match(regexAnswerStart);
+                    const content = raw.substring(match[0].length).trim();
+                    result += line.isRed ? `\\CorrectChoice ${content}\n` : `\\choice ${content}\n`;
                 } else {
-                    // --- LÀ CÂU HỎI ---
-                    cleanText = cleanText.replace(regexQuestionNumber, ""); // Xóa "Câu 1:"
+                    const cleanText = raw.replace(regexQuestionNumber, "").trim();
                     if (cleanText) questionBuffer += " " + cleanText;
-                    if (imgCode) questionBuffer += imgCode;
                 }
             }
-            
-            if (questionBuffer.length > 0) result += `\n\\question ${questionBuffer.trim()}\n`;
-            document.getElementById('examInput').value = result.trim();
+            if (questionBuffer.trim()) result += `\n\\question ${questionBuffer.trim()}\n`;
+            document.getElementById(outputId).value = result.trim();
         }
 
-        // --- 3. LOGIC FIREBASE & APP (GIỮ NGUYÊN) ---
+        function processConversion() { convertAreaToLatex('inputArea', 'examInput'); }
+        function processConversionMixed() { convertAreaToLatex('inputAreaMixed', 'examInputMixed'); }
+        function debounceConversionTF() { clearTimeout(conversionTimeout); conversionTimeout = setTimeout(processTFConversion, 1200); }
+
+        // Parse câu Đúng/Sai từ contenteditable
+        // Format: dòng câu hỏi, rồi a) b) c) d) — ý đỏ = ĐÚNG
+        function parseTFQuestions(areaId) {
+            const area = document.getElementById(areaId);
+            if (!area) return [];
+            const lines = extractLines(area);
+            const questions = [];
+            let currentQ = null;
+            const regexTFItem = /^([a-dA-D])[\.\)]\s*/;
+            const regexQNum   = /^(Câu\s*\d+\s*[:\.]\s*|\d+\s*[\.:\)]\s*)/i;
+
+            for (const line of lines) {
+                const raw = line.text.replace(/\s\s+/g,' ').trim();
+                if (!raw) continue;
+                if (regexTFItem.test(raw)) {
+                    if (!currentQ) continue;
+                    const match = raw.match(regexTFItem);
+                    const content = raw.substring(match[0].length).trim();
+                    currentQ.items.push({ text: content, correct: line.isRed });
+                } else {
+                    const cleanText = raw.replace(regexQNum, '').trim();
+                    if (cleanText) {
+                        currentQ = { question: cleanText, items: [], type: 'tf' };
+                        questions.push(currentQ);
+                    }
+                }
+            }
+            return questions.filter(q => q.items.length > 0);
+        }
+
+        function processTFConversion() {}
+
+        function parseMCDirect(areaId) {
+            const area = document.getElementById(areaId);
+            if (!area) return [];
+            const lines = extractLines(area);
+            const questions = [];
+            let currentQ = null;
+            const regexChoice = /^([A-D])[\.\)]\s*/i;
+            const regexQNum   = /^(Câu\s*\d+\s*[:\.]\s*|\d+\s*[\.:\)]\s*)/i;
+
+            for (const line of lines) {
+                const raw = line.text.replace(/\s\s+/g,' ').trim();
+                if (!raw) continue;
+                if (regexChoice.test(raw)) {
+                    if (!currentQ) continue;
+                    const match = raw.match(regexChoice);
+                    const content = raw.substring(match[0].length).trim();
+                    if (line.isRed) currentQ.correctAnswer = currentQ.choices.length;
+                    currentQ.choices.push(content);
+                } else {
+                    const cleanText = raw.replace(regexQNum, '').trim();
+                    if (cleanText) {
+                        currentQ = { question: cleanText, choices: [], correctAnswer: -1, type: 'mc' };
+                        questions.push(currentQ);
+                    }
+                }
+            }
+            return questions.filter(q => q.choices.length >= 2);
+        }
+
+        function parseMCQuestions(text) {
+            const questions = [];
+            const parts = text.split("\\question");
+            parts.forEach(part => {
+                if (!part.trim()) return;
+                const lines = part.split("\n").filter(l => l.trim());
+                const qText = lines[0];
+                const choices = [];
+                let correct = -1;
+                lines.slice(1).forEach(line => {
+                    if (line.includes("\\choice")) choices.push(line.replace("\\choice", "").trim());
+                    if (line.includes("\\CorrectChoice")) { correct = choices.length; choices.push(line.replace("\\CorrectChoice", "").trim()); }
+                });
+                if (choices.length > 0) questions.push({ question: qText, choices, correctAnswer: correct, type: 'mc' });
+            });
+            return questions;
+        }
+
+        // ============================================================
+        // TẠO ĐỀ THI
+        // ============================================================
+        function createExam() {
+            const title = document.getElementById("examTitle").value.trim();
+            const duration = parseInt(document.getElementById("duration").value);
+
+            if (!title) return alert("Thiếu tên đề thi!");
+            if (!currentGrade) return alert("Vui lòng chọn khối lớp!");
+            if (!currentSubject) return alert("Vui lòng chọn môn học!");
+
+            const allSubjects = [...SUBJECTS_BY_LEVEL.tieuhoc, ...SUBJECTS_BY_LEVEL.thcs, ...SUBJECTS_BY_LEVEL.thpt];
+            const subjectInfo = allSubjects.find(s => s.key === currentSubject);
+            const subjectLabel = subjectInfo ? subjectInfo.label : currentSubject;
+
+            let questions = [];       // câu TN (A-D)
+            let tfQuestions = [];     // câu Đúng/Sai
+            let essayPart = [];       // tự luận (chỉ hiển thị, không nộp)
+
+            if (currentExamType === 'mc') {
+                processConversion();
+                const text = document.getElementById("examInput").value;
+                questions = parseMCQuestions(text);
+                if (questions.length === 0) return alert("Không tìm thấy câu trắc nghiệm! Kiểm tra lại nội dung.");
+
+            } else if (currentExamType === 'tf') {
+                // Đọc TN trực tiếp từ contenteditable (không qua LaTeX trung gian)
+                questions = parseMCDirect('inputAreaTF_mc');
+                // Phần Đúng/Sai
+                tfQuestions = parseTFQuestions('inputAreaTF_tf');
+                if (questions.length === 0 && tfQuestions.length === 0) return alert("Chưa có câu hỏi nào! Kiểm tra nội dung phần TN và Đúng/Sai.");
+
+            } else if (currentExamType === 'mixed') {
+                processConversionMixed();
+                const text = document.getElementById("examInputMixed").value;
+                questions = parseMCQuestions(text);
+                essayPart = collectEssayData(essayQuestionsMixed);
+                if (questions.length === 0 && essayPart.length === 0) return alert("Chưa có câu hỏi nào! Kiểm tra phần Trắc Nghiệm và Tự Luận.");
+            }
+
+            const mcScoreRatio = currentExamType === 'mixed' 
+                ? parseFloat(document.getElementById('mcScore').value)
+                : currentExamType === 'tf'
+                    ? parseFloat(document.getElementById('tfMcScore').value)
+                    : 10;
+            const tfScoreRatio = currentExamType === 'tf' ? parseFloat(document.getElementById('tfTfScore').value) : 0;
+            const essayScoreRatio = currentExamType === 'mixed' ? parseFloat(document.getElementById('essayScore').value) : 0;
+
+            exam = {
+                title, duration, grade: currentGrade, subject: currentSubject, subjectLabel,
+                level: currentLevel,
+                examType: currentExamType,
+                questions,       // TN A-D
+                tfQuestions,     // Đúng/Sai
+                essayQuestions: essayPart,  // Tự luận (chỉ hiển thị)
+                mcScoreRatio,
+                tfScoreRatio,
+                essayScoreRatio,
+                active: true,
+                createdAt: Date.now()
+            };
+
+            // Render preview
+            const previewMeta = document.getElementById('previewMeta');
+            const typeLabels = { mc: '📋 Trắc nghiệm', tf: '✅ TN + Đúng/Sai', mixed: '📝 TN + Tự luận (giấy)' };
+            previewMeta.innerHTML = `
+                <strong>${title}</strong> &nbsp;|&nbsp; 
+                ${typeLabels[currentExamType]} &nbsp;|&nbsp;
+                Môn: <strong>${subjectLabel}</strong> &nbsp;|&nbsp;
+                Lớp: <strong>${currentGrade || '?'}</strong> &nbsp;|&nbsp;
+                Thời gian: <strong>${duration} phút</strong>
+                ${currentExamType === 'mixed' ? `&nbsp;|&nbsp; TN: <strong>${mcScoreRatio}đ</strong> / TL: <strong>${essayScoreRatio}đ</strong>` : ''}
+                ${currentExamType === 'tf' ? `&nbsp;|&nbsp; TN: <strong>${mcScoreRatio}đ</strong> / Đúng/Sai: <strong>${tfScoreRatio}đ</strong>` : ''}
+            `;
+
+            const previewBox = document.getElementById("previewBox");
+            let previewHTML = '';
+
+            if (questions.length > 0) {
+                previewHTML += `<p style="font-weight:700; color:#4f46e5; margin-bottom:8px;">📋 PHẦN TRẮC NGHIỆM (${questions.length} câu)</p>`;
+                previewHTML += questions.map((q, i) => {
+                    const choicesHtml = q.choices.map((c, idx) =>
+                        `<div style="${idx === q.correctAnswer ? 'color:#10b981; font-weight:bold;' : ''}">${String.fromCharCode(65+idx)}. ${c} ${idx === q.correctAnswer ? '✅' : ''}</div>`
+                    ).join("");
+                    return `<div class="preview-item">
+                        <div class="preview-badge">${i+1}</div>
+                        <div class="preview-content">
+                            <strong>${q.question}</strong>
+                            <div style="margin-top:5px; margin-left:10px;">${choicesHtml}</div>
+                        </div>
+                    </div>`;
+                }).join("");
+            }
+
+            if (tfQuestions.length > 0) {
+                previewHTML += `<p style="font-weight:700; color:#0369a1; margin-bottom:8px; margin-top:15px;">✅ PHẦN ĐÚNG/SAI (${tfQuestions.length} câu)</p>`;
+                previewHTML += tfQuestions.map((q, i) => {
+                    const itemsHtml = q.items.map((item, idx) =>
+                        `<div style="${item.correct ? 'color:#10b981; font-weight:bold;' : 'color:#ef4444;'}">${String.fromCharCode(97+idx)}) ${item.text} → <em>${item.correct ? 'ĐÚNG ✅' : 'SAI ❌'}</em></div>`
+                    ).join("");
+                    return `<div class="preview-item" style="border-left-color:#0369a1;">
+                        <div class="preview-badge" style="background:#0369a1;">${i+1}</div>
+                        <div class="preview-content">
+                            <strong>${q.question}</strong>
+                            <div style="margin-top:8px; margin-left:5px; display:flex; flex-direction:column; gap:4px;">${itemsHtml}</div>
+                        </div>
+                    </div>`;
+                }).join("");
+            }
+
+            if (essayPart.length > 0) {
+                previewHTML += `<p style="font-weight:700; color:#f59e0b; margin-bottom:8px; margin-top:15px;">✍️ PHẦN TỰ LUẬN – Làm giấy (${essayPart.length} câu)</p>`;
+                previewHTML += `<div style="background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:0.82rem; color:#9a3412;">⚠️ Phần này chỉ hiển thị đề cho học sinh đọc. Học sinh tự làm trên giấy, giáo viên chấm thủ công.</div>`;
+                previewHTML += essayPart.map((q, i) => `
+                    <div class="preview-item">
+                        <div class="preview-badge essay-badge">${i+1}</div>
+                        <div class="preview-content">
+                            <strong>${q.question}</strong>
+                            <div class="essay-preview-box">
+                                📌 Đáp án gợi ý: ${q.answer || 'Chưa có'}<br>
+                                🎯 Điểm tối đa: ${q.maxScore}đ
+                            </div>
+                        </div>
+                    </div>`).join("");
+            }
+
+            previewBox.innerHTML = previewHTML;
+            document.getElementById("previewSection").classList.remove("hidden");
+            document.getElementById("previewSection").scrollIntoView({ behavior: "smooth" });
+        }
+
+        // ============================================================
+        // FIREBASE FUNCTIONS
+        // ============================================================
+        function saveExam() {
+            if (!exam) return;
+            const code = Math.random().toString(36).substr(2, 6).toUpperCase();
+            exam.code = code;
+
+            // Lưu theo node khoi/mon
+            const nodePath = getFirebaseNode(exam.grade, exam.subject, code);
+            db.ref(nodePath).set(exam).then(() => {
+                document.getElementById("code").textContent = code;
+                document.getElementById("previewSection").classList.add("hidden");
+                document.getElementById("codeBox").classList.remove("hidden");
+                loadActiveExams();
+            });
+        }
+
+        let allActiveExams = {}; // cache for filtering
+
+        function onFilterChange() {
+            renderActiveExamsList();
+        }
+
+        function loadActiveExams() {
+            db.ref("exams").on("value", snap => {
+                allActiveExams = {};
+                const root = snap.val() || {};
+                // Traverse: exams/khoi_X/subject/code
+                Object.keys(root).forEach(khoiKey => {
+                    const khoiData = root[khoiKey];
+                    if (typeof khoiData !== 'object') return;
+                    Object.keys(khoiData).forEach(subjectKey => {
+                        const subjectData = khoiData[subjectKey];
+                        if (typeof subjectData !== 'object') return;
+                        Object.keys(subjectData).forEach(code => {
+                            const exam = subjectData[code];
+                            if (exam && exam.active) {
+                                allActiveExams[code] = { ...exam, _khoiKey: khoiKey, _subjectKey: subjectKey };
+                            }
+                        });
+                    });
+                });
+
+                updateFilterDropdowns();
+                renderActiveExamsList();
+            });
+        }
+
+        function updateFilterDropdowns() {
+            const gradeSet = new Set();
+            const subjectSet = new Set();
+            Object.values(allActiveExams).forEach(d => {
+                if (d.grade) gradeSet.add(d.grade);
+                if (d.subject) subjectSet.add(d.subject);
+            });
+
+            const gradeEl = document.getElementById('filterGrade');
+            const curGrade = gradeEl.value;
+            gradeEl.innerHTML = '<option value="">Tất cả khối</option>' +
+                [...gradeSet].sort((a,b) => parseInt(a)-parseInt(b)).map(g => `<option value="${g}" ${g===curGrade?'selected':''}>Lớp ${g}</option>`).join('');
+
+            const subjectEl = document.getElementById('filterSubject');
+            const curSubject = subjectEl.value;
+            const allSubjects = [...SUBJECTS_BY_LEVEL.tieuhoc, ...SUBJECTS_BY_LEVEL.thcs, ...SUBJECTS_BY_LEVEL.thpt];
+            subjectEl.innerHTML = '<option value="">Tất cả môn</option>' +
+                [...subjectSet].map(s => {
+                    const info = allSubjects.find(x => x.key === s);
+                    return `<option value="${s}" ${s===curSubject?'selected':''}>${info ? info.label : s}</option>`;
+                }).join('');
+        }
+
+        function renderActiveExamsList() {
+            const list = document.getElementById("activeList");
+            const filterLevel   = document.getElementById('filterLevel').value;
+            const filterGrade   = document.getElementById('filterGrade').value;
+            const filterSubject = document.getElementById('filterSubject').value;
+
+            const levelGradeMap = { tieuhoc: [1,2,3,4,5], thcs: [6,7,8,9], thpt: [10,11,12] };
+
+            const filtered = Object.entries(allActiveExams).filter(([code, d]) => {
+                if (filterLevel && levelGradeMap[filterLevel] && !levelGradeMap[filterLevel].includes(parseInt(d.grade))) return false;
+                if (filterGrade && d.grade !== filterGrade) return false;
+                if (filterSubject && d.subject !== filterSubject) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<p style="color:#64748b;">Không có đề nào phù hợp.</p>';
+                return;
+            }
+
+            const typeLabels = {
+                mc:    '<span class="exam-type-badge badge-mc">TN</span>',
+                tf:    '<span class="exam-type-badge" style="background:#dcfce7;color:#166534;">TN+Đ/S</span>',
+                mixed: '<span class="exam-type-badge badge-mixed">TN+TL</span>'
+            };
+            const allSubjects = [...SUBJECTS_BY_LEVEL.tieuhoc, ...SUBJECTS_BY_LEVEL.thcs, ...SUBJECTS_BY_LEVEL.thpt];
+
+            let html = `<table class="modern-table">
+                <thead><tr><th>Mã</th><th>Tên Đề</th><th>Khối</th><th>Môn</th><th>Hình thức</th><th>Hành Động</th></tr></thead><tbody>`;
+            filtered.forEach(([code, d]) => {
+                const subInfo = allSubjects.find(s => s.key === d.subject);
+                const subLabel = subInfo ? subInfo.label : (d.subjectLabel || d.subject || '');
+                html += `<tr>
+                    <td><strong style="font-family:monospace;">${code}</strong></td>
+                    <td>${d.title}</td>
+                    <td><span style="background:#e0e7ff; color:#4338ca; padding:2px 8px; border-radius:6px; font-size:0.78rem; font-weight:700;">Lớp ${d.grade || '?'}</span></td>
+                    <td>${subLabel}</td>
+                    <td>${typeLabels[d.examType] || typeLabels['mc']}</td>
+                    <td>
+                        <button class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem;"
+                            onclick="closeExam('${d._khoiKey}','${d._subjectKey}','${code}')">Đóng Đề</button>
+                    </td>
+                </tr>`;
+            });
+            list.innerHTML = html + "</tbody></table>";
+        }
+
+        function closeExam(khoiKey, subjectKey, code) {
+            if (confirm("Bạn chắc chắn muốn đóng đề này?"))
+                db.ref(`exams/${khoiKey}/${subjectKey}/${code}/active`).set(false);
+        }
+
+        function loadResults() {
+            db.ref("results").on("value", snap => {
+                results = [];
+                const data = snap.val() || {};
+                Object.keys(data).forEach(k => results.push(data[k]));
+                results.sort((a, b) => b.timestamp - a.timestamp);
+
+                const typeLabels = { mc: 'TN', essay: 'TL', mixed: 'TN+TL' };
+                let html = `<table class="modern-table">
+                    <thead><tr><th>Thời gian</th><th>Họ tên</th><th>Mã đề</th><th>Loại</th><th>Điểm TN</th><th>Điểm TL</th><th>Tổng</th><th>Trạng thái</th></tr></thead><tbody>`;
+                results.forEach(r => {
+                    const isCheat = r.tabSwitch;
+                    const mcScore = r.score !== undefined ? r.score : '--';
+                    const essayScore = r.essayScore !== undefined ? r.essayScore : '--';
+                    const totalScore = r.totalScore !== undefined ? r.totalScore : r.score;
+                    html += `<tr>
+                        <td>${new Date(r.timestamp).toLocaleTimeString()}</td>
+                        <td>${r.name}</td>
+                        <td>${r.code}</td>
+                        <td><span style="font-size:0.75rem; color:#64748b;">${typeLabels[r.examType] || 'TN'}</span></td>
+                        <td style="color:${parseFloat(mcScore) >= 5 ? 'var(--success)' : 'var(--danger)'}; font-weight:bold;">${mcScore}</td>
+                        <td style="color:#f59e0b; font-weight:bold;">${essayScore}</td>
+                        <td style="font-weight:bold; color:${parseFloat(totalScore) >= 5 ? 'var(--success)' : 'var(--danger)'};">${totalScore}</td>
+                        <td>${isCheat ? '<span style="color:red">⚠️ Gian lận</span>' : '<span style="color:green">Hợp lệ</span>'}</td>
+                    </tr>`;
+                });
+                document.getElementById("resultsList").innerHTML = html + "</tbody></table>";
+            });
+        }
+
+        function clearResults() { if (confirm("CẢNH BÁO: Xóa tất cả kết quả thi?")) db.ref("results").remove(); }
+
+        function downloadExcel() {
+            if (results.length === 0) return alert("Chưa có dữ liệu!");
+            const dataSheet1 = results.map((r, index) => ({
+                "STT": index + 1,
+                "Họ và Tên": r.name,
+                "Mã Đề": r.code,
+                "Môn học": r.subjectLabel || '',
+                "Hình thức": { mc: 'Trắc nghiệm', essay: 'Tự luận', mixed: 'TN+TL' }[r.examType] || 'TN',
+                "Điểm Trắc Nghiệm": r.score !== undefined ? parseFloat(r.score) : '',
+                "Điểm Tự Luận": r.essayScore !== undefined ? parseFloat(r.essayScore) : '',
+                "Tổng Điểm": r.totalScore !== undefined ? parseFloat(r.totalScore) : parseFloat(r.score),
+                "Số Câu Đúng (TN)": r.correct || '',
+                "Gian Lận": r.tabSwitch ? "CÓ" : "Không",
+                "Thời Gian Nộp": new Date(r.timestamp).toLocaleString()
+            }));
+
+            const scores = results.map(r => parseFloat(r.totalScore || r.score || 0));
+            const avg = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
+            const dataSheet2 = [
+                { "Thống Kê": "Tổng số học sinh", "Giá trị": scores.length },
+                { "Thống Kê": "Điểm trung bình", "Giá trị": avg },
+                { "Thống Kê": "Giỏi (>=8)", "Giá trị": scores.filter(s => s >= 8).length },
+                { "Thống Kê": "Khá (6.5–7.9)", "Giá trị": scores.filter(s => s >= 6.5 && s < 8).length },
+                { "Thống Kê": "Trung bình (5–6.4)", "Giá trị": scores.filter(s => s >= 5 && s < 6.5).length },
+                { "Thống Kê": "Yếu (<5)", "Giá trị": scores.filter(s => s < 5).length },
+                { "Thống Kê": "Gian lận", "Giá trị": results.filter(r => r.tabSwitch).length }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            const ws1 = XLSX.utils.json_to_sheet(dataSheet1);
+            const ws2 = XLSX.utils.json_to_sheet(dataSheet2);
+            ws1['!cols'] = [{wch:5},{wch:25},{wch:10},{wch:15},{wch:14},{wch:16},{wch:14},{wch:12},{wch:14},{wch:12},{wch:22}];
+            ws2['!cols'] = [{wch:22},{wch:15}];
+            XLSX.utils.book_append_sheet(wb, ws1, "BangDiem");
+            XLSX.utils.book_append_sheet(wb, ws2, "ThongKe");
+            XLSX.writeFile(wb, `KetQuaThi_${new Date().getTime()}.xlsx`);
+        }
+
+        function copy() { navigator.clipboard.writeText(document.getElementById("code").textContent); alert("Đã copy mã!"); }
+        function login() {
+            const name = document.getElementById("teacherName").value.trim();
+            if (name) {
+                localStorage.setItem("teacherLog", name);
+                document.getElementById("loginSection").classList.add("hidden");
+                document.getElementById("mainSection").classList.remove("hidden");
+                document.getElementById("welcomeName").innerText = name;
+                loadActiveExams();
+                loadResults();
+            } else alert("Vui lòng nhập tên!");
+        }
+        function logout() { localStorage.removeItem("teacherLog"); location.reload(); }
+
         window.onload = function() {
+            // Khởi tạo UI khối/môn mặc định
+            selectLevel('tieuhoc');
+
             try {
                 if (config.databaseURL.endsWith("/")) config.databaseURL = config.databaseURL.slice(0, -1);
                 config.authDomain = config.projectId + ".firebaseapp.com";
                 if (!firebase.apps.length) firebase.initializeApp(config);
                 db = firebase.database();
-
                 db.ref(".info/connected").on("value", (snap) => {
                     const st = document.getElementById("sysStatus");
                     if (snap.val() === true) {
                         st.innerHTML = "🟢 Đã kết nối máy chủ";
                         st.style.color = "var(--success)";
-                        if(localStorage.getItem("teacherLog")) {
+                        if (localStorage.getItem("teacherLog")) {
                             document.getElementById("loginSection").classList.add("hidden");
                             document.getElementById("mainSection").classList.remove("hidden");
                             document.getElementById("welcomeName").innerText = localStorage.getItem("teacherLog");
@@ -508,174 +1577,8 @@
                         st.style.color = "var(--danger)";
                     }
                 });
-            } catch (e) { alert("Lỗi Config!"); }
+            } catch (e) { alert("Lỗi Config Firebase!"); }
         };
-
-        function login() {
-            const name = document.getElementById("teacherName").value.trim();
-            if (name) {
-                localStorage.setItem("teacherLog", name);
-                document.getElementById("loginSection").classList.add("hidden");
-                document.getElementById("mainSection").classList.remove("hidden");
-                document.getElementById("welcomeName").innerText = name;
-                loadActiveExams();
-                loadResults();
-            } else alert("Vui lòng nhập tên!");
-        }
-        function logout() { localStorage.removeItem("teacherLog"); location.reload(); }
-        function copy() { navigator.clipboard.writeText(document.getElementById("code").textContent); alert("Đã copy mã!"); }
-
-        function createExam() {
-            processConversion(); 
-            const title = document.getElementById("examTitle").value;
-            const duration = document.getElementById("duration").value;
-            const text = document.getElementById("examInput").value;
-
-            if (!title || !text) return alert("Thiếu tên đề hoặc nội dung!");
-
-            const questions = [];
-            const parts = text.split("\\question");
-            parts.forEach(part => {
-                if(!part.trim()) return;
-                const lines = part.split("\n").filter(l => l.trim());
-                const qText = lines[0]; 
-                const choices = [];
-                let correct = -1;
-                lines.slice(1).forEach(line => {
-                    if (line.includes("\\choice")) choices.push(line.replace("\\choice", "").trim());
-                    if (line.includes("\\CorrectChoice")) { correct = choices.length; choices.push(line.replace("\\CorrectChoice", "").trim()); }
-                });
-                if (choices.length > 0) questions.push({ question: qText, choices: choices, correctAnswer: correct });
-            });
-
-            if (questions.length === 0) return alert("Không tìm thấy câu hỏi! (Kiểm tra lại xem đã Enter xuống dòng giữa các câu chưa)");
-            exam = { title, duration: parseInt(duration), questions, active: true, createdAt: Date.now() };
-
-            const previewBox = document.getElementById("previewBox");
-            // Hiển thị Preview
-            previewBox.innerHTML = questions.map((q, i) => {
-                // Đánh dấu đáp án đúng trong preview
-                const choicesHtml = q.choices.map((c, idx) => 
-                    `<div style="${idx === q.correctAnswer ? 'color:green; font-weight:bold;' : ''}">${String.fromCharCode(65+idx)}. ${c} ${idx === q.correctAnswer ? '✅' : ''}</div>`
-                ).join("");
-
-                return `
-                <div class="preview-item">
-                    <div class="preview-badge">${i+1}</div>
-                    <div class="preview-content">
-                        <strong>${q.question}</strong>
-                        <div style="margin-top:5px; margin-left: 10px;">
-                            ${choicesHtml}
-                        </div>
-                    </div>
-                </div>`;
-            }).join("");
-            
-            document.getElementById("previewSection").classList.remove("hidden");
-            document.getElementById("previewSection").scrollIntoView({behavior: "smooth"});
-        }
-
-        function saveExam() {
-            if (!exam) return;
-            const code = Math.random().toString(36).substr(2, 6).toUpperCase();
-            exam.code = code;
-            db.ref("exams/" + code).set(exam).then(() => {
-                document.getElementById("code").textContent = code;
-                document.getElementById("previewSection").classList.add("hidden");
-                document.getElementById("codeBox").classList.remove("hidden");
-                loadActiveExams();
-            });
-        }
-
-        function loadActiveExams() {
-            db.ref("exams").orderByChild("active").equalTo(true).on("value", snap => {
-                const list = document.getElementById("activeList");
-                const data = snap.val() || {};
-                if(Object.keys(data).length === 0) {
-                    list.innerHTML = "<p>Không có đề nào đang mở.</p>";
-                    return;
-                }
-                
-                let html = `<table class="modern-table"><thead><tr><th>Mã</th><th>Tên Đề</th><th>Trạng Thái</th><th>Hành Động</th></tr></thead><tbody>`;
-                Object.keys(data).forEach(k => {
-                    html += `
-                        <tr>
-                            <td><strong>${k}</strong></td>
-                            <td>${data[k].title}</td>
-                            <td><span class="status-badge status-open">Đang mở</span></td>
-                            <td><button class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="closeExam('${k}')">Đóng Đề</button></td>
-                        </tr>
-                    `;
-                });
-                list.innerHTML = html + "</tbody></table>";
-            });
-        }
-        function closeExam(code) { if(confirm("Bạn chắc chắn muốn đóng đề này? Học sinh sẽ không thể vào thi nữa.")) db.ref("exams/" + code + "/active").set(false); }
-
-        function loadResults() {
-            db.ref("results").on("value", snap => {
-                results = [];
-                const data = snap.val() || {};
-                if (!data) return document.getElementById("resultsList").innerHTML = "<p>Chưa có kết quả.</p>";
-                
-                Object.keys(data).forEach(k => results.push(data[k]));
-                results.sort((a, b) => b.timestamp - a.timestamp);
-
-                let html = `<table class="modern-table">
-                    <thead><tr><th>Thời gian</th><th>Họ tên</th><th>Mã đề</th><th>Điểm</th><th>Trạng thái</th></tr></thead>
-                    <tbody>`;
-                results.forEach(r => {
-                    const isCheat = r.tabSwitch;
-                    html += `<tr>
-                        <td>${new Date(r.timestamp).toLocaleTimeString()}</td>
-                        <td>${r.name}</td>
-                        <td>${r.code}</td>
-                        <td style="font-weight:bold; color:${parseFloat(r.score) >= 5 ? 'var(--success)' : 'var(--danger)'}">${r.score}</td>
-                        <td>${isCheat ? '<span style="color:red">⚠️ Gian lận</span>' : '<span style="color:green">Hợp lệ</span>'}</td>
-                    </tr>`;
-                });
-                document.getElementById("resultsList").innerHTML = html + "</tbody></table>";
-            });
-        }
-
-        function clearResults() { if(confirm("CẢNH BÁO: Xóa tất cả kết quả thi?")) db.ref("results").remove(); }
-
-        function downloadExcel() {
-            if (results.length === 0) return alert("Chưa có dữ liệu!");
-            
-            const dataSheet1 = results.map((r, index) => ({
-                "STT": index + 1,
-                "Họ và Tên": r.name,
-                "Mã Đề": r.code,
-                "Điểm Số": parseFloat(r.score),
-                "Số Câu Đúng": r.correct,
-                "Tổng Số Câu": r.total,
-                "Gian Lận (Rời tab)": r.tabSwitch ? "CÓ" : "Không",
-                "Thời Gian Nộp": new Date(r.timestamp).toLocaleString()
-            }));
-
-            const scores = results.map(r => parseFloat(r.score));
-            const avg = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2);
-            
-            const dataSheet2 = [
-                { "Thống Kê": "Tổng số học sinh", "Giá trị": scores.length },
-                { "Thống Kê": "Điểm trung bình", "Giá trị": avg },
-                { "Thống Kê": "Giỏi (>=8)", "Giá trị": scores.filter(s=>s>=8).length },
-                { "Thống Kê": "Yếu (<5)", "Giá trị": scores.filter(s=>s<5).length },
-                { "Thống Kê": "Gian lận", "Giá trị": results.filter(r=>r.tabSwitch).length }
-            ];
-
-            const wb = XLSX.utils.book_new();
-            const ws1 = XLSX.utils.json_to_sheet(dataSheet1);
-            const ws2 = XLSX.utils.json_to_sheet(dataSheet2);
-            
-            ws1['!cols'] = [{wch:5}, {wch:25}, {wch:10}, {wch:10}, {wch:12}, {wch:12}, {wch:15}, {wch:22}];
-            ws2['!cols'] = [{wch:20}, {wch:15}];
-
-            XLSX.utils.book_append_sheet(wb, ws1, "BangDiem");
-            XLSX.utils.book_append_sheet(wb, ws2, "ThongKe");
-            XLSX.writeFile(wb, `KetQuaThi_${new Date().getTime()}.xlsx`);
-        }
     </script>
 </body>
 </html>
