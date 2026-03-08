@@ -22,6 +22,22 @@
         .choice-label:hover { background: #e9ecef; }
         input[type="radio"] { margin-right: 10px; transform: scale(1.2); }
 
+        /* ĐÚNG/SAI */
+        .tf-question-box { background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0369a1; }
+        .tf-section-title { font-size: 0.75rem; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .tf-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: white; border-radius: 6px; margin-bottom: 6px; border: 1px solid #bae6fd; }
+        .tf-item-text { flex: 1; font-size: 0.95em; }
+        .tf-toggle { display: flex; gap: 6px; flex-shrink: 0; }
+        .tf-btn { padding: 5px 14px; border: 2px solid #cbd5e1; border-radius: 20px; cursor: pointer; font-size: 0.82rem; font-weight: 700; background: white; transition: all 0.15s; color: #475569; }
+        .tf-btn.selected-true { background: #10b981; border-color: #10b981; color: white; }
+        .tf-btn.selected-false { background: #ef4444; border-color: #ef4444; color: white; }
+
+        /* TỰ LUẬN DISPLAY */
+        .essay-display-box { background: #fff7ed; border: 2px solid #fed7aa; border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+        .essay-display-title { font-size: 0.8rem; font-weight: 700; color: #9a3412; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .essay-q-item { background: white; border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; border: 1px solid #fed7aa; }
+        .essay-note { background: #fef3c7; border-radius: 6px; padding: 10px 14px; font-size: 0.85rem; color: #92400e; margin-bottom: 12px; text-align: center; }
+
         /* ĐỒNG HỒ */
         .exam-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
         .timer { font-size: 24px; font-weight: bold; color: #dc3545; background: #fff0f0; padding: 5px 15px; border-radius: 20px; }
@@ -53,9 +69,11 @@
             <h1>👋 Xin chào, <span id="welcomeName" style="color: #007bff;"></span></h1>
             <div style="background: #e3f2fd; padding: 20px; border-radius: 10px; margin: 20px 0;">
                 <h2 id="examTitle">Tên Đề Thi</h2>
-                <div style="display: flex; justify-content: space-around; margin-top: 15px;">
+                <div style="display: flex; justify-content: space-around; margin-top: 15px; flex-wrap: wrap; gap: 10px;">
                     <div>⏱️ <strong><span id="examDuration">0</span></strong> phút</div>
-                    <div>📝 <strong><span id="examQCount">0</span></strong> câu hỏi</div>
+                    <div>📋 <strong><span id="examQCount">0</span></strong> câu TN</div>
+                    <div id="examTFInfo" style="display:none;">✅ <strong><span id="examTFCount">0</span></strong> câu Đúng/Sai</div>
+                    <div id="examEssayInfo" style="display:none;">✍️ <strong><span id="examEssayCount">0</span></strong> câu Tự luận (giấy)</div>
                 </div>
             </div>
             
@@ -97,6 +115,7 @@
             </div>
             
             <p>Số câu đúng: <strong id="correctCount">0</strong> / <strong id="totalCount">0</strong></p>
+            <p id="tfResultLine" style="display:none; color:#0369a1; font-weight:600;"></p>
             <p id="resultMsg" style="font-style: italic; color: #555;"></p>
         </div>
 
@@ -120,6 +139,7 @@
         let examData = null;
         let studentName = "";
         let examCode = "";
+        let examNodePath = "";  // đường dẫn node Firebase
         let timerInterval = null;
         let userAnswers = {};
         let isExamRunning = false; // Biến kiểm soát trạng thái thi
@@ -153,20 +173,47 @@
             if (!studentName || !examCode) return alert("Vui lòng nhập đủ thông tin!");
 
             try {
-                const snap = await db.ref("exams/" + examCode).once("value");
-                const data = snap.val();
+                // Tìm đề theo mã trong toàn bộ node exams/khoi_*/subject/code
+                const rootSnap = await db.ref("exams").once("value");
+                const root = rootSnap.val() || {};
+                let data = null;
+                let foundKhoi = '', foundSubject = '';
+
+                outer: for (const khoiKey of Object.keys(root)) {
+                    const khoiData = root[khoiKey];
+                    if (typeof khoiData !== 'object') continue;
+                    for (const subjectKey of Object.keys(khoiData)) {
+                        const subjectData = khoiData[subjectKey];
+                        if (typeof subjectData !== 'object') continue;
+                        if (subjectData[examCode]) {
+                            data = subjectData[examCode];
+                            foundKhoi = khoiKey;
+                            foundSubject = subjectKey;
+                            break outer;
+                        }
+                    }
+                }
 
                 if (!data) return alert("❌ Mã đề không đúng!");
                 if (!data.active) return alert("⛔ Đề thi đã đóng!");
 
                 examData = data;
+                examNodePath = `exams/${foundKhoi}/${foundSubject}/${examCode}`;
+
                 document.getElementById("loginSection").classList.add("hidden");
                 document.getElementById("waitingSection").classList.remove("hidden");
                 
                 document.getElementById("welcomeName").textContent = studentName;
                 document.getElementById("examTitle").textContent = data.title;
                 document.getElementById("examDuration").textContent = data.duration;
-                document.getElementById("examQCount").textContent = data.questions.length;
+                document.getElementById("examQCount").textContent = (data.questions || []).length;
+
+                const tfCount = (data.tfQuestions || []).length;
+                const essayCount = (data.essayQuestions || []).length;
+                const tfInfo = document.getElementById("examTFInfo");
+                const essayInfo = document.getElementById("examEssayInfo");
+                if (tfCount > 0) { tfInfo.style.display = ''; document.getElementById("examTFCount").textContent = tfCount; }
+                if (essayCount > 0) { essayInfo.style.display = ''; document.getElementById("examEssayCount").textContent = essayCount; }
 
             } catch (e) { alert("Lỗi: " + e.message); }
         }
@@ -191,13 +238,80 @@
         function renderQuestions() {
             const list = document.getElementById("questionsList");
             list.innerHTML = "";
-            examData.questions.forEach((q, index) => {
-                let html = `<div class="question-box"><div class="question-text">Câu ${index + 1}: ${q.question}</div>`;
-                q.choices.forEach((choice, cIndex) => {
-                    html += `<label class="choice-label"><input type="radio" name="q${index}" onchange="userAnswers[${index}]=${cIndex}"> ${String.fromCharCode(65 + cIndex)}. ${choice}</label>`;
+            const mcQuestions = examData.questions || [];
+            const tfQuestions = examData.tfQuestions || [];
+            const essayQs = examData.essayQuestions || [];
+
+            // --- Phần Trắc Nghiệm ---
+            if (mcQuestions.length > 0) {
+                const sectionTitle = document.createElement('p');
+                sectionTitle.style.cssText = 'font-weight:700; color:#1d4ed8; margin:0 0 12px 0; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.5px;';
+                sectionTitle.textContent = `📋 PHẦN TRẮC NGHIỆM (${mcQuestions.length} câu)`;
+                list.appendChild(sectionTitle);
+
+                mcQuestions.forEach((q, index) => {
+                    let html = `<div class="question-box"><div class="question-text">Câu ${index + 1}: ${q.question}</div>`;
+                    q.choices.forEach((choice, cIndex) => {
+                        html += `<label class="choice-label"><input type="radio" name="q${index}" onchange="userAnswers['mc_${index}']=${cIndex}"> ${String.fromCharCode(65 + cIndex)}. ${choice}</label>`;
+                    });
+                    list.innerHTML += html + "</div>";
                 });
-                list.innerHTML += html + "</div>";
-            });
+            }
+
+            // --- Phần Đúng/Sai ---
+            if (tfQuestions.length > 0) {
+                const tfTitle = document.createElement('p');
+                tfTitle.style.cssText = 'font-weight:700; color:#0369a1; margin:16px 0 12px 0; font-size:0.95rem; text-transform:uppercase; letter-spacing:0.5px;';
+                tfTitle.textContent = `✅ PHẦN ĐÚNG/SAI (${tfQuestions.length} câu)`;
+                list.appendChild(tfTitle);
+
+                tfQuestions.forEach((q, qIndex) => {
+                    const box = document.createElement('div');
+                    box.className = 'tf-question-box';
+                    let itemsHtml = q.items.map((item, iIndex) => `
+                        <div class="tf-item" id="tfitem_${qIndex}_${iIndex}">
+                            <div class="tf-item-text"><strong>${String.fromCharCode(97 + iIndex)})</strong> ${item.text}</div>
+                            <div class="tf-toggle">
+                                <button class="tf-btn" id="tfbtn_${qIndex}_${iIndex}_true"
+                                    onclick="selectTF(${qIndex}, ${iIndex}, true)">Đúng</button>
+                                <button class="tf-btn" id="tfbtn_${qIndex}_${iIndex}_false"
+                                    onclick="selectTF(${qIndex}, ${iIndex}, false)">Sai</button>
+                            </div>
+                        </div>`).join('');
+                    box.innerHTML = `
+                        <div class="tf-section-title">✅ Câu ${qIndex + 1} — Đúng/Sai</div>
+                        <div class="question-text" style="font-size:1em; margin-bottom:10px;">${q.question}</div>
+                        ${itemsHtml}`;
+                    list.appendChild(box);
+                });
+            }
+
+            // --- Phần Tự luận (chỉ hiển thị, làm giấy) ---
+            if (essayQs.length > 0) {
+                const essayBox = document.createElement('div');
+                essayBox.className = 'essay-display-box';
+                essayBox.innerHTML = `
+                    <div class="essay-display-title">✍️ PHẦN TỰ LUẬN — Làm trên giấy (${essayQs.length} câu)</div>
+                    <div class="essay-note">⚠️ Phần này làm trên giấy thi. Đọc kỹ rồi trả lời vào tờ giấy của bạn.</div>
+                    ${essayQs.map((q, i) => `
+                        <div class="essay-q-item">
+                            <strong>Câu ${i+1}:</strong> ${q.question}
+                            ${q.maxScore ? `<span style="float:right; font-size:0.8rem; color:#f59e0b; font-weight:700;">(${q.maxScore} điểm)</span>` : ''}
+                        </div>`).join('')}`;
+                list.appendChild(essayBox);
+            }
+        }
+
+        function selectTF(qIndex, iIndex, value) {
+            if (!userAnswers['tf']) userAnswers['tf'] = {};
+            if (!userAnswers['tf'][qIndex]) userAnswers['tf'][qIndex] = {};
+            userAnswers['tf'][qIndex][iIndex] = value;
+
+            // Cập nhật UI
+            const trueBtn = document.getElementById(`tfbtn_${qIndex}_${iIndex}_true`);
+            const falseBtn = document.getElementById(`tfbtn_${qIndex}_${iIndex}_false`);
+            trueBtn.className = 'tf-btn' + (value === true ? ' selected-true' : '');
+            falseBtn.className = 'tf-btn' + (value === false ? ' selected-false' : '');
         }
 
         function startTimer(seconds) {
@@ -237,39 +351,66 @@
         async function submitExam(auto = false, reason = "normal") {
             if (!auto && !confirm("Nộp bài ngay?")) return;
 
-            // Ngắt trạng thái thi ngay lập tức để không bị trigger loop
             isExamRunning = false; 
             clearInterval(timerInterval);
 
-            // Tính điểm
-            let correct = 0;
-            examData.questions.forEach((q, i) => { if (userAnswers[i] === q.correctAnswer) correct++; });
-            const total = examData.questions.length;
-            const score = (correct / total * 10).toFixed(1);
+            const mcQuestions = examData.questions || [];
+            const tfQuestions = examData.tfQuestions || [];
 
-            // Gửi dữ liệu
+            // --- Tính điểm TN ---
+            let mcCorrect = 0;
+            mcQuestions.forEach((q, i) => {
+                if (userAnswers['mc_' + i] === q.correctAnswer) mcCorrect++;
+            });
+            const mcTotal = mcQuestions.length;
+            const mcRatio = examData.mcScoreRatio || 10;
+            const mcScore = mcTotal > 0 ? ((mcCorrect / mcTotal) * mcRatio).toFixed(2) : 0;
+
+            // --- Tính điểm Đúng/Sai ---
+            // Mỗi câu 4 ý, đúng hết 4 ý = 1đ, đúng 3 = 0.75đ, đúng 2 = 0.5đ, đúng 1 = 0.25đ
+            let tfCorrectItems = 0;
+            let tfTotalItems = 0;
+            const tfRatio = examData.tfScoreRatio || 0;
+            tfQuestions.forEach((q, qIdx) => {
+                q.items.forEach((item, iIdx) => {
+                    tfTotalItems++;
+                    const ans = userAnswers['tf'] && userAnswers['tf'][qIdx] && userAnswers['tf'][qIdx][iIdx];
+                    if (ans === item.correct) tfCorrectItems++;
+                });
+            });
+            const tfScore = tfTotalItems > 0 ? ((tfCorrectItems / tfTotalItems) * tfRatio).toFixed(2) : 0;
+
+            // --- Tổng điểm ---
+            const totalScore = (parseFloat(mcScore) + parseFloat(tfScore)).toFixed(1);
+
             const resultData = {
-                name: studentName,
-                code: examCode,
-                score: score,
-                correct: correct,
-                total: total,
+                name: studentName, code: examCode,
+                score: mcScore,
+                tfScore: tfScore,
+                totalScore: totalScore,
+                correct: mcCorrect, total: mcTotal,
+                tfCorrectItems, tfTotalItems,
+                examType: examData.examType || 'mc',
                 timestamp: Date.now(),
-                // Nếu reason là cheat thì đánh dấu tabSwitch = true
-                tabSwitch: (reason === "cheat") 
+                tabSwitch: (reason === "cheat")
             };
 
             await db.ref("results").push(resultData);
 
-            // Hiển thị kết quả
             document.getElementById("examSection").classList.add("hidden");
             document.getElementById("resultSection").classList.remove("hidden");
             
-            document.getElementById("scoreVal").textContent = score;
-            document.getElementById("correctCount").textContent = correct;
-            document.getElementById("totalCount").textContent = total;
+            document.getElementById("scoreVal").textContent = totalScore;
+            document.getElementById("correctCount").textContent = mcCorrect;
+            document.getElementById("totalCount").textContent = mcTotal;
 
-            // Xử lý thông báo dựa trên lý do nộp
+            // Hiện thêm dòng Đúng/Sai nếu có
+            const tfLine = document.getElementById("tfResultLine");
+            if (tfTotalItems > 0) {
+                tfLine.style.display = '';
+                tfLine.textContent = `✅ Đúng/Sai: ${tfCorrectItems}/${tfTotalItems} ý đúng (${tfScore} điểm)`;
+            }
+
             const msgNode = document.getElementById("resultMsg");
             const cheatBox = document.getElementById("cheatBox");
             const circle = document.getElementById("scoreCircle");
@@ -277,11 +418,16 @@
             if (reason === "cheat") {
                 cheatBox.classList.remove("hidden");
                 msgNode.textContent = "Bạn đã vi phạm quy chế thi (Rời màn hình).";
-                circle.style.background = "#dc3545"; // Đổi màu đỏ
+                circle.style.background = "#dc3545";
             } else if (reason === "timeout") {
                 msgNode.textContent = "Đã tự động nộp bài do hết giờ.";
             } else {
                 msgNode.textContent = "Bạn đã nộp bài thành công.";
+            }
+
+            // Nếu có tự luận, nhắc học sinh
+            if ((examData.essayQuestions || []).length > 0) {
+                msgNode.textContent += " Nhớ nộp phần tự luận làm giấy cho giáo viên!";
             }
         }
     </script>
